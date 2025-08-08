@@ -1,4 +1,4 @@
-// server.js - VERSÃO MELHORADA
+// server.js - VERSÃO MELHORADA COM PROMPTS OTIMIZADOS
 
 // =================================================================
 // 1. IMPORTAÇÕES E CONFIGURAÇÃO INICIAL
@@ -36,39 +36,29 @@ const cohere = new CohereClient({
 // =================================================================
 // 3. CONFIGURAÇÕES DE MIDDLEWARE
 // =================================================================
-
-// Configuração de CORS mais segura para produção
 const corsOptions = {
-    // Em produção, substitua '*' pelo seu domínio de frontend. Ex: 'https://meu-saber-app.com'
     origin: process.env.NODE_ENV === 'production' ? process.env.ALLOWED_ORIGIN : '*',
     methods: 'GET,POST,PUT,DELETE',
 };
 app.use(cors(corsOptions));
-
-// Helmet para adicionar uma camada de segurança nos headers HTTP
 app.use(helmet());
-
-// Middleware para parsear JSON
 app.use(express.json());
 
-// Rate Limiter para rotas de autenticação, prevenindo ataques de força bruta
 const authLimiter = rateLimit({
-    windowMs: 15 * 60 * 1000, // 15 minutos
-    max: 20, // Limita cada IP a 20 requisições por janela (15 min)
+    windowMs: 15 * 60 * 1000,
+    max: 20,
     standardHeaders: true,
     legacyHeaders: false,
     message: { error: 'Muitas tentativas de login/registro. Tente novamente em 15 minutos.' }
 });
 
 // =================================================================
-// 4. FUNÇÕES UTILITÁRIAS E LÓGICA DE NEGÓCIO
+// 4. LÓGICA DA IA E PROMPTS OTIMIZADOS
 // =================================================================
 
-// Função utilitária para "envelopar" rotas assíncronas e capturar erros
 const asyncHandler = (fn) => (req, res, next) =>
     Promise.resolve(fn(req, res, next)).catch(next);
 
-// Autenticação com Token JWT
 function authenticateToken(req, res, next) {
     const authHeader = req.headers['authorization'];
     const token = authHeader && authHeader.split(' ')[1];
@@ -87,7 +77,36 @@ function authenticateToken(req, res, next) {
     });
 }
 
-// Lógica de negócio da IA (personalidades, geração de título, etc.)
+// --- MELHORIA DE PROMPT: PREÂMBULO E PERSONALIDADES ---
+const CORE_SYSTEM_PROMPT = `
+Você é o SABER (Sistema de Análise e Benefício Educacional em Relatórios), uma avançada Inteligência Artificial educacional.
+
+// MISSÃO PRINCIPAL
+Sua missão é ser um tutor assistente para estudantes do Brasil, fornecendo explicações claras, precisas e didáticas sobre uma vasta gama de tópicos acadêmicos. Você deve sempre promover o aprendizado ético e seguro.
+
+// SUAS CAPACIDADES
+- Explicar conceitos complexos de forma simples.
+- Criar planos de estudo e resumos.
+- Ajudar na resolução de problemas, mostrando o passo a passo.
+- Escrever códigos e explicar algoritmos.
+- Traduzir e corrigir textos.
+
+// DIRETRIZES DE COMPORTAMENTO
+1.  **Foco Educacional:** Mantenha-se estritamente no campo educacional.
+2.  **Segurança e Ética:** Recuse-se a gerar conteúdo perigoso, ilegal, odioso ou plagiado. Não forneça conselhos médicos, financeiros ou legais.
+3.  **Imparcialidade:** Não expresse opiniões pessoais, crenças ou posicionamentos políticos. Seja neutro e objetivo.
+4.  **Adaptação:** Adapte a complexidade da sua resposta ao nível de entendimento que o aluno parece ter.
+5.  **Formatação:** Use Markdown para melhorar a clareza. Utilize **negrito** para termos importantes, *itálico* para ênfase, listas para passos ou itens, e blocos de código para sintaxes de programação.
+`;
+
+const PERSONALITY_PROMPTS = {
+    balanced: `**Estilo de Comunicação:** Equilibrado. Seja claro, direto e educativo. Mantenha um tom encorajador, mas profissional. O objetivo é a clareza e a precisão da informação.`,
+    friendly: `**Estilo de Comunicação:** Amigável e Acolhedor. Use uma linguagem calorosa, empática e positiva. Comece com uma saudação amigável. Use emojis (de forma moderada e apropriada) para criar uma conexão. Trate o aluno como um parceiro de estudos.`,
+    professional: `**Estilo de Comunicação:** Profissional e Formal. Seja preciso, objetivo e estruturado. Utilize uma linguagem técnica apropriada ao campo de estudo. Evite gírias, emojis ou excesso de informalidade. Ideal para respostas a nível universitário ou científico.`,
+    creative: `**Estilo de Comunicação:** Criativo e Inspirador. Use analogias, metáforas e exemplos inovadores para explicar os conceitos. Incentive a curiosidade e o pensamento fora da caixa. O objetivo é tornar o aprendizado mais engajador e memorável.`,
+    technical: `**Estilo de Comunicação:** Altamente Técnico e Detalhado. Forneça explicações profundas, com dados e terminologia específica. Utilize blocos de código para exemplos práticos e sintaxes. Seja rigoroso e preciso, ideal para estudantes avançados de programação e ciências exatas.`
+};
+
 const DEFAULT_AI_SETTINGS = {
     temperature: 0.5,
     maxTokens: 300,
@@ -95,30 +114,31 @@ const DEFAULT_AI_SETTINGS = {
     contextMemory: 10
 };
 
-const PERSONALITY_PROMPTS = {
-    balanced: 'Você é equilibrado, claro e educativo. Responda de forma direta mas amigável.',
-    friendly: 'Você é muito amigável, caloroso e encorajador. Use uma linguagem acolhedora e empática.',
-    professional: 'Você é formal, preciso e objetivo. Mantenha um tom profissional e técnico.',
-    creative: 'Você é criativo, inovador e inspirador. Use analogias e exemplos criativos.',
-    technical: 'Você é altamente técnico e detalhista. Forneça explicações profundas e precisas.'
-};
-
+// --- MELHORIA DE PROMPT: GERAÇÃO DE TÍTULO ---
 async function generateChatTitle(firstMessage, aiSettings = DEFAULT_AI_SETTINGS) {
-    // ... (função mantida como no original, já é bem robusta)
     if (!firstMessage || typeof firstMessage !== 'string') {
         console.warn("generateChatTitle recebeu mensagem inválida.");
         return "Nova Conversa";
     }
     try {
-        const titlePrompt = `Analise a seguinte mensagem de um aluno e crie um título curto e descritivo (máximo 40 caracteres) que capture o tema principal:\n\nMensagem: "${firstMessage}"\n\nCrie um título objetivo.\n\nResponda APENAS com o título, sem aspas ou explicações:`;
+        const titlePrompt = `
+            Você é um Especialista em Indexação. Sua tarefa é criar um título muito curto e objetivo para a mensagem de um usuário.
+            - O título deve ter no máximo 5 palavras.
+            - O título deve capturar a essência do tópico principal.
+            - Responda APENAS com o título. Não adicione aspas, prefixos ou explicações.
+
+            MENSAGEM DO USUÁRIO: "${firstMessage}"
+
+            TÍTULO GERADO:
+        `;
         const response = await cohere.generate({
             model: 'command-r-plus',
             prompt: titlePrompt,
             maxTokens: 15,
             temperature: Math.min(aiSettings.temperature || 0.3, 0.7),
-            stopSequences: ['\n', '"', "'"],
+            stopSequences: ['\n'],
         });
-        let generatedTitle = response?.generations?.[0]?.text?.trim().replace(/["']/g, '').substring(0, 40);
+        let generatedTitle = response?.generations?.[0]?.text?.trim().replace(/["']/g, '');
         if (!generatedTitle || generatedTitle.length < 3) {
             const words = firstMessage.split(' ').slice(0, 5).join(' ');
             generatedTitle = words.substring(0, 40) + (words.length > 40 ? '...' : '');
@@ -131,9 +151,9 @@ async function generateChatTitle(firstMessage, aiSettings = DEFAULT_AI_SETTINGS)
     }
 }
 
-function buildPersonalityPrompt(personality, basePrompt) {
+function buildPersonalityPrompt(personality) {
     const personalityAddition = PERSONALITY_PROMPTS[personality] || PERSONALITY_PROMPTS.balanced;
-    return `${basePrompt}\n\nPERSONALIDADE: ${personalityAddition}\n\nLembre-se de sempre manter o foco educacional e adaptar sua resposta ao nível do aluno.`;
+    return `${CORE_SYSTEM_PROMPT}\n// DIRETRIZ DE PERSONALIDADE ATUAL\n${personalityAddition}`;
 }
 
 function filterContextHistory(messages, contextMemory) {
@@ -144,7 +164,7 @@ function filterContextHistory(messages, contextMemory) {
 }
 
 // =================================================================
-// 5. DEFINIÇÃO DAS ROTAS DA API
+// 5. DEFINIÇÃO DAS ROTAS DA API (Sem alterações na lógica)
 // =================================================================
 
 // Servir arquivos estáticos
@@ -237,12 +257,12 @@ app.post('/api/chat', authenticateToken,
 
         const cohereResponse = await cohere.chat({
             message: message,
+            preamble: buildPersonalityPrompt(aiSettings.personality),
             chatHistory: historyForPrompt.length > 0 ? historyForPrompt : undefined,
             promptTruncation: 'AUTO_PRESERVE_ORDER',
             model: 'command-r-plus',
             temperature: parseFloat(aiSettings.temperature) || 0.5,
             maxTokens: parseInt(aiSettings.maxTokens) || 300,
-            preamble: buildPersonalityPrompt(aiSettings.personality, `Você é o SABER – Sistema de Análise e Benefício Educacional em Relatório...`)
         });
         const aiResponseText = cohereResponse.text;
 
@@ -259,9 +279,8 @@ app.post('/api/chat', authenticateToken,
     })
 );
 
-// --- Rotas de Conversas ---
+// --- Rotas de Conversas (sem alterações) ---
 app.get('/api/history', authenticateToken, asyncHandler(async (req, res) => {
-    // ... (lógica mantida, já é eficiente)
     const allConversations = await db.getChatHistory(req.user.id);
     const now = new Date();
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -323,7 +342,7 @@ app.put('/api/conversation/:id/title', authenticateToken,
     })
 );
 
-// --- Rotas de Dados e Estatísticas ---
+// --- Rotas de Dados e Estatísticas (sem alterações) ---
 app.get('/api/export', authenticateToken, asyncHandler(async (req, res) => {
     const userId = req.user.id;
     const allUserConversations = await db.getChatHistory(userId);
@@ -372,7 +391,7 @@ app.use((err, req, res, next) => {
 db.initializeDatabase()
     .then(() => {
         app.listen(PORT, () => {
-            console.log(`Servidor SABER rodando na porta ${PORT}`);
+            console.log(`Servidor SABER rodando na porta ${PORT} com prompts otimizados!`);
         });
     })
     .catch(error => {
