@@ -62,17 +62,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // 3. Funções de Interface Principal (UI)
     //================================================
 
-    /**
-     * Exibe a interface de chat após um login/verificação bem-sucedido.
-     * @param {object} user - O objeto do usuário autenticado.
-     */
     const showChatInterface = (user) => {
         currentUser = user;
         if (loginScreen) loginScreen.style.display = 'none';
         if (appContainer) appContainer.style.display = 'flex';
 
         const userNameEl = document.querySelector('.user-name');
+        const userInitialEl = document.getElementById('user-initial');
         if (userNameEl) userNameEl.textContent = user.name || 'Usuário';
+        if (userInitialEl && user.name) userInitialEl.textContent = user.name.charAt(0).toUpperCase();
 
         carregarHistorico();
         if (!currentConversationId) {
@@ -80,36 +78,35 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    /**
-     * Exibe a tela de login.
-     */
     const showLoginInterface = () => {
         if (loginScreen) loginScreen.style.display = 'flex';
         if (appContainer) appContainer.style.display = 'none';
         limparHistoricoVisual();
     };
 
-    /**
-     * Exibe uma mensagem de boas-vindas na área de chat quando nenhuma conversa está ativa.
-     */
     function adicionarMensagemDeBoasVindas() {
-    if (!chatMessages) return;
-    chatMessages.innerHTML = `
+        if (!chatMessages) return;
+        chatMessages.innerHTML = `
         <div class="welcome-placeholder">
             <img src="assets/logo.png" alt="SABER Logo" class="welcome-logo">
             <h2>Como posso te ajudar hoje?</h2>
             <div class="suggested-prompts">
-                <button class="prompt-btn">Explique a teoria da relatividade</button>
-                <button class="prompt-btn">Crie um plano de estudos para biologia</button>
-                <button class="prompt-btn">Como funciona uma rede neural?</button>
+                <button class="prompt-btn" data-prompt="Explique a teoria da relatividade">Explique a teoria da relatividade</button>
+                <button class="prompt-btn" data-prompt="Crie um plano de estudos para biologia">Crie um plano de estudos para biologia</button>
+                <button class="prompt-btn" data-prompt="Como funciona uma rede neural?">Como funciona uma rede neural?</button>
             </div>
         </div>
     `;
-}
+        document.querySelectorAll('.prompt-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const promptText = btn.dataset.prompt;
+                messageInput.value = promptText;
+                messageForm.requestSubmit();
+            });
+        });
+    }
 
-    /**
-     * Limpa a área de chat e exibe a mensagem de boas-vindas.
-     */
+
     function limparInterface() {
         if (chatMessages) chatMessages.innerHTML = '';
         hideThinking();
@@ -121,19 +118,16 @@ document.addEventListener('DOMContentLoaded', () => {
             item.classList.remove('active');
         });
 
-        // Se nenhuma conversa estiver ativa após limpar, mostra a mensagem de boas-vindas
         if (!currentConversationId) {
             adicionarMensagemDeBoasVindas();
         }
     }
 
+
     //================================================
     // 4. Lógica de Autenticação e Inicialização
     //================================================
 
-    /**
-     * Função principal que inicializa a aplicação.
-     */
     async function initializeApp() {
         const token = localStorage.getItem('token');
 
@@ -167,15 +161,12 @@ document.addEventListener('DOMContentLoaded', () => {
         applySettings();
         updateAboutStats();
     }
-    
-    // ... (O restante das suas funções como `setupEventListeners`, `handleLogin`, `handleRegister`, `sendMessage`, `carregarHistorico`, etc., viriam aqui)
-    // O código abaixo é uma continuação direta e completa.
+
 
     //================================================
     // 5. Gerenciamento de Eventos
     //================================================
     function setupEventListeners() {
-        // Abas de Login/Registro
         loginTabs.forEach(tab => {
             tab.addEventListener('click', () => {
                 document.querySelector('.login-tab.active')?.classList.remove('active');
@@ -188,24 +179,19 @@ document.addEventListener('DOMContentLoaded', () => {
         if (loginForm) loginForm.addEventListener('submit', handleLogin);
         if (registerForm) registerForm.addEventListener('submit', handleRegister);
         if (logoutBtn) logoutBtn.addEventListener('click', handleLogout);
-        
-        // Chat
         if (messageForm) messageForm.addEventListener('submit', handleSubmit);
         if (messageInput) {
             messageInput.addEventListener('input', autoResizeTextarea);
             messageInput.addEventListener('keydown', handleKeyDown);
         }
-        
-        // Sidebar e Modal
         if (newChatBtn) newChatBtn.addEventListener('click', handleNewConversationClick);
         if (headerMenuBtn) headerMenuBtn.addEventListener('click', toggleSidebar);
         if (sidebarToggle) sidebarToggle.addEventListener('click', openSettingsModal);
         if (sidebarOverlay) sidebarOverlay.addEventListener('click', closeSidebar);
-        
         setupSettingsModal();
     }
-    
-    // ... (Handlers de eventos como handleLogin, handleRegister, etc.)
+
+
     async function handleLogin(e) {
         e.preventDefault();
         const email = document.getElementById('email').value;
@@ -214,12 +200,17 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const res = await fetch('/api/login', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password })
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    email,
+                    password
+                })
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Erro ao fazer login');
-            
+
             localStorage.setItem('token', data.token);
             showChatInterface(data.user);
         } catch (error) {
@@ -242,12 +233,18 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const res = await fetch('/api/register', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, email, password })
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    name,
+                    email,
+                    password
+                })
             });
             const data = await res.json();
             if (res.status !== 201) throw new Error(data.error || 'Erro ao registrar');
-            
+
             alert('Conta criada com sucesso! Faça login.');
             document.querySelector('[data-tab="login"]')?.click();
         } catch (error) {
@@ -272,7 +269,6 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         const message = messageInput.value.trim();
         if (message) {
-            // Se não houver conversa ativa, crie uma primeiro
             if (!currentConversationId) {
                 const newConvId = await criarNovaConversa();
                 if (newConvId) {
@@ -283,7 +279,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     }
-    
+
     function handleKeyDown(e) {
         if (e.key === 'Enter' && !e.shiftKey && userSettings.chat.enterToSend) {
             e.preventDefault();
@@ -291,24 +287,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // O restante das suas funções (sendMessage, carregarHistorico, etc.) permanece praticamente o mesmo.
-    // Apenas certifique-se de que a lógica da `welcomeScreen` foi removida.
-    // ...
-
-    // Coloque o restante do seu código aqui, a partir da função `setupSettingsModal`.
-    // Colei uma versão limpa abaixo para garantir.
-
     //================================================
-    // Lógica do Chat e API
+    // 6. Lógica do Chat e API
     //================================================
-    
+
     async function sendMessage(message) {
         if (!currentConversationId) {
             console.error("Tentativa de enviar mensagem sem uma conversa ativa.");
             return;
         }
 
-        // Limpa a mensagem de boas-vindas se for a primeira mensagem
         const placeholder = chatMessages.querySelector('.welcome-placeholder');
         if (placeholder) placeholder.remove();
 
@@ -343,7 +331,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (userSettings.interface.soundNotifications) playNotificationSound();
 
             if (data.isFirstMessage) {
-                await carregarHistorico(); // Atualiza a sidebar com o novo título
+                await carregarHistorico();
             }
 
         } catch (error) {
@@ -352,6 +340,46 @@ document.addEventListener('DOMContentLoaded', () => {
             addMessageToChat('ai', `Desculpe, ocorreu um erro: ${error.message}`);
         }
     }
+
+    // *** FUNÇÃO ADICIONADA ***
+    function addMessageToChat(role, text, isAi = false) {
+        const messageWrapper = document.createElement('div');
+        messageWrapper.classList.add('message', role);
+
+        const avatar = document.createElement('div');
+        avatar.classList.add('message-avatar');
+        const avatarCircle = document.createElement('div');
+        avatarCircle.classList.add('avatar-circle');
+
+        if (isAi) {
+            const logo = document.createElement('img');
+            logo.src = 'assets/logo.png';
+            logo.alt = 'SABER';
+            avatarCircle.appendChild(logo);
+        } else {
+            avatarCircle.textContent = currentUser?.name?.charAt(0).toUpperCase() || 'U';
+        }
+        avatar.appendChild(avatarCircle);
+
+        const bubble = document.createElement('div');
+        bubble.classList.add('message-bubble');
+        const messageText = document.createElement('div');
+        messageText.classList.add('message-text');
+
+        // Simples conversão de markdown (negrito e itálico) para HTML
+        let htmlContent = escapeHtml(text)
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>');
+        
+        messageText.innerHTML = htmlContent;
+
+        bubble.appendChild(messageText);
+        messageWrapper.appendChild(avatar);
+        messageWrapper.appendChild(bubble);
+        chatMessages.appendChild(messageWrapper);
+        scrollToBottom(true);
+    }
+
 
     async function criarNovaConversa() {
         console.log('🆕 Criando nova conversa...');
@@ -372,13 +400,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const conversation = await response.json();
             currentConversationId = conversation.id;
-            
+
             limparInterface();
-            await carregarHistorico(); // Carrega o histórico para mostrar a nova conversa
-            
+            await carregarHistorico();
+
             messageInput.focus();
             if (window.innerWidth <= 1024) closeSidebar();
-            
+
             return conversation.id;
 
         } catch (error) {
@@ -390,16 +418,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // ... (Aqui entrariam as outras funções como carregarHistorico, deletarConversa, etc.)
-    // Adicionei elas abaixo para manter a completude, com pequenas melhorias.
-
     async function carregarHistorico() {
         const token = localStorage.getItem('token');
         if (!token) return;
 
         try {
             const response = await fetch('/api/history', {
-                headers: { 'Authorization': `Bearer ${token}` }
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
             });
             if (!response.ok) throw new Error('Falha ao carregar histórico');
 
@@ -410,15 +437,14 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Erro ao carregar histórico:', error);
         }
     }
-    
+
     function renderizarHistorico() {
         limparHistoricoVisual();
         preencherSecao('todayChats', chatHistory.today);
         preencherSecao('yesterdayChats', chatHistory.yesterday);
         preencherSecao('weekChats', chatHistory.week);
         preencherSecao('olderChats', chatHistory.older);
-        
-        // Ativa o item da conversa atual na lista
+
         const activeItem = document.querySelector(`.chat-history-item[data-id="${currentConversationId}"]`);
         if (activeItem) activeItem.classList.add('active');
     }
@@ -430,9 +456,67 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById(id.replace('Chats', 'Section')).style.display = 'none';
         });
     }
+    
+    // *** FUNÇÃO ADICIONADA ***
+    function preencherSecao(containerId, conversas) {
+        const container = document.getElementById(containerId);
+        const section = document.getElementById(containerId.replace('Chats', 'Section'));
+        if (!container || !section || conversas.length === 0) {
+            if(section) section.style.display = 'none';
+            return;
+        }
+
+        section.style.display = 'block';
+        container.innerHTML = ''; // Limpa antes de adicionar
+        conversas.forEach(conv => {
+            const item = document.createElement('a');
+            item.href = '#';
+            item.className = 'chat-history-item';
+            item.dataset.id = conv.id;
+            item.textContent = conv.title || 'Conversa sem título';
+            item.title = conv.title;
+            if (conv.id === currentConversationId) {
+                item.classList.add('active');
+            }
+            item.addEventListener('click', async (e) => {
+                e.preventDefault();
+                currentConversationId = conv.id;
+                await carregarConversa(conv.id);
+            });
+            container.appendChild(item);
+        });
+    }
+
+    async function carregarConversa(id) {
+        showThinking();
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`/api/conversation/${id}`, {
+                 headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!response.ok) throw new Error('Não foi possível carregar a conversa.');
+
+            const data = await response.json();
+            chatMessages.innerHTML = '';
+            data.messages.forEach(msg => {
+                addMessageToChat(msg.role, msg.content, msg.role === 'assistant');
+            });
+            currentConversationId = id;
+            document.querySelectorAll('.chat-history-item.active').forEach(i => i.classList.remove('active'));
+            document.querySelector(`.chat-history-item[data-id="${id}"]`).classList.add('active');
+            if (window.innerWidth <= 1024) closeSidebar();
+
+        } catch(err) {
+            console.error("Erro ao carregar conversa:", err);
+            alert(err.message);
+        } finally {
+            hideThinking();
+        }
+    }
+
 
     //================================================
-    // 6. Gerenciamento do Modal de Configurações
+    // 7. Gerenciamento do Modal de Configurações
     //================================================
 
     function setupSettingsModal() {
@@ -480,154 +564,248 @@ document.addEventListener('DOMContentLoaded', () => {
         settingsPanels.forEach(panel => panel.classList.toggle('active', panel.id === `${tabName}-panel`));
     }
 
-    //================================================
-    // 7. Lógica de Configurações (Settings)
-    //================================================
+    /**
+ * Adiciona os event listeners aos controles do modal de configurações.
+ */
+function setupSettingsControls() {
+    const temperatureSlider = document.getElementById("temperature");
+    const temperatureValueDisplay = document.querySelector('[for="temperature"]')?.nextElementSibling?.querySelector(".setting-value");
 
-    function setupSettingsControls() {
-        // AI Settings
-        const temperatureSlider = document.getElementById('temperature');
-        const temperatureValueDisplay = document.querySelector('[for="temperature"]')?.nextElementSibling?.querySelector('.setting-value');
-        if (temperatureSlider && temperatureValueDisplay) {
-            temperatureSlider.addEventListener('input', (e) => {
-                const value = parseFloat(e.target.value);
-                userSettings.ai.temperature = value;
-                temperatureValueDisplay.textContent = value.toFixed(1);
-            });
+    if (temperatureSlider && temperatureValueDisplay) {
+        temperatureSlider.addEventListener("input", e => {
+            const value = parseFloat(e.target.value);
+            userSettings.ai.temperature = value;
+            temperatureValueDisplay.textContent = value.toFixed(1);
+        });
+    }
+
+    document.getElementById("maxTokens")?.addEventListener("change", e => {
+        userSettings.ai.maxTokens = parseInt(e.target.value);
+    });
+    document.getElementById("aiPersonality")?.addEventListener("change", e => {
+        userSettings.ai.personality = e.target.value;
+    });
+    document.getElementById("contextMemory")?.addEventListener("change", e => {
+        userSettings.ai.contextMemory = parseInt(e.target.value);
+    });
+    document.getElementById("theme")?.addEventListener("change", e => {
+        userSettings.interface.theme = e.target.value;
+        applyTheme();
+    });
+    document.getElementById("fontSize")?.addEventListener("change", e => {
+        userSettings.interface.fontSize = e.target.value;
+        applyFontSize();
+    });
+    document.getElementById("typingEffect")?.addEventListener("change", e => {
+        userSettings.interface.typingEffect = e.target.checked;
+    });
+    document.getElementById("soundNotifications")?.addEventListener("change", e => {
+        userSettings.interface.soundNotifications = e.target.checked;
+    });
+    document.getElementById("compactMode")?.addEventListener("change", e => {
+        userSettings.interface.compactMode = e.target.checked;
+        applyCompactMode();
+    });
+    document.getElementById("autoSave")?.addEventListener("change", e => {
+        userSettings.chat.autoSave = e.target.checked;
+    });
+    document.getElementById("confirmDelete")?.addEventListener("change", e => {
+        userSettings.chat.confirmDelete = e.target.checked;
+    });
+    document.getElementById("enterToSend")?.addEventListener("change", e => {
+        userSettings.chat.enterToSend = e.target.checked;
+    });
+    document.getElementById("showTimestamps")?.addEventListener("change", e => {
+        userSettings.chat.showTimestamps = e.target.checked;
+        applyTimestampDisplay();
+    });
+}
+
+/**
+ * Adiciona listeners para os controles especiais (exportar, limpar).
+ */
+function setupSpecialControls() {
+    document.getElementById("exportChats")?.addEventListener("click", exportConversations);
+    document.getElementById("clearHistory")?.addEventListener("click", clearAllHistory);
+}
+
+/**
+ * Carrega as configurações do usuário salvas no localStorage.
+ */
+function loadUserSettings() {
+    try {
+        const savedSettings = localStorage.getItem("saber_settings");
+        if (savedSettings) {
+            const parsedSettings = JSON.parse(savedSettings);
+            // Faz um merge para garantir que novas configurações não quebrem o app
+            userSettings.ai = { ...userSettings.ai, ...parsedSettings.ai };
+            userSettings.interface = { ...userSettings.interface, ...parsedSettings.interface };
+            userSettings.chat = { ...userSettings.chat, ...parsedSettings.chat };
         }
-        document.getElementById('maxTokens')?.addEventListener('change', (e) => { userSettings.ai.maxTokens = parseInt(e.target.value); });
-        document.getElementById('aiPersonality')?.addEventListener('change', (e) => { userSettings.ai.personality = e.target.value; });
-        document.getElementById('contextMemory')?.addEventListener('change', (e) => { userSettings.ai.contextMemory = parseInt(e.target.value); });
-
-        // Interface Settings
-        document.getElementById('theme')?.addEventListener('change', (e) => { userSettings.interface.theme = e.target.value; applyTheme(); });
-        document.getElementById('fontSize')?.addEventListener('change', (e) => { userSettings.interface.fontSize = e.target.value; applyFontSize(); });
-        document.getElementById('typingEffect')?.addEventListener('change', (e) => { userSettings.interface.typingEffect = e.target.checked; });
-        document.getElementById('soundNotifications')?.addEventListener('change', (e) => { userSettings.interface.soundNotifications = e.target.checked; });
-        document.getElementById('compactMode')?.addEventListener('change', (e) => { userSettings.interface.compactMode = e.target.checked; applyCompactMode(); });
-        
-        // Chat Settings
-        document.getElementById('autoSave')?.addEventListener('change', (e) => { userSettings.chat.autoSave = e.target.checked; });
-        document.getElementById('confirmDelete')?.addEventListener('change', (e) => { userSettings.chat.confirmDelete = e.target.checked; });
-        document.getElementById('enterToSend')?.addEventListener('change', (e) => { userSettings.chat.enterToSend = e.target.checked; });
-        document.getElementById('showTimestamps')?.addEventListener('change', (e) => { userSettings.chat.showTimestamps = e.target.checked; applyTimestampDisplay(); });
+    } catch (e) {
+        console.warn("Erro ao carregar configurações:", e);
     }
+}
 
-    function setupSpecialControls() {
-        document.getElementById('exportChats')?.addEventListener('click', exportConversations);
-        document.getElementById('clearHistory')?.addEventListener('click', clearAllHistory);
-    }
+/**
+ * Salva as configurações atuais do usuário no localStorage.
+ */
+function saveUserSettings() {
+    try {
+        localStorage.setItem("saber_settings", JSON.stringify(userSettings));
+        applySettings();
+        const saveButton = document.getElementById("saveSettings");
 
-    function loadUserSettings() {
-        try {
-            const savedSettings = localStorage.getItem('saber_settings');
-            if (savedSettings) {
-                const parsed = JSON.parse(savedSettings);
-                // Merge profundo para evitar que configurações futuras ausentes no localStorage quebrem o app
-                userSettings.ai = { ...userSettings.ai, ...parsed.ai };
-                userSettings.interface = { ...userSettings.interface, ...parsed.interface };
-                userSettings.chat = { ...userSettings.chat, ...parsed.chat };
-            }
-        } catch (error) {
-            console.warn('Erro ao carregar configurações:', error);
+        if (saveButton) {
+            const originalText = saveButton.innerHTML;
+            saveButton.innerHTML = '<i class="fas fa-check"></i> Salvo!';
+            saveButton.disabled = true;
+            saveButton.style.background = "hsl(120, 60%, 50%)";
+
+            setTimeout(() => {
+                saveButton.innerHTML = originalText;
+                saveButton.style.background = "";
+                saveButton.disabled = false;
+            }, 2000);
         }
+    } catch (e) {
+        console.error("Erro ao salvar configurações:", e);
+        alert("Erro ao salvar configurações.");
     }
+}
 
-    function saveUserSettings() {
-        try {
-            localStorage.setItem('saber_settings', JSON.stringify(userSettings));
-            applySettings();
-            
-            const saveBtn = document.getElementById('saveSettings');
-            if (saveBtn) {
-                const originalText = saveBtn.innerHTML;
-                saveBtn.innerHTML = '<i class="fas fa-check"></i> Salvo!';
-                saveBtn.disabled = true;
-                saveBtn.style.background = 'hsl(120, 60%, 50%)';
-
-                setTimeout(() => {
-                    saveBtn.innerHTML = originalText;
-                    saveBtn.style.background = '';
-                    saveBtn.disabled = false;
-                }, 2000);
-            }
-        } catch (error) {
-            console.error('Erro ao salvar configurações:', error);
-            alert('Erro ao salvar configurações.');
-        }
-    }
-
-    function resetUserSettings() {
-        if (!confirm('Tem certeza que deseja restaurar as configurações padrão?')) return;
-
+/**
+ * Restaura as configurações para os valores padrão.
+ */
+function resetUserSettings() {
+    if (confirm("Tem certeza que deseja restaurar as configurações padrão?")) {
         userSettings = {
-            ai: { temperature: 0.5, maxTokens: 300, personality: 'balanced', contextMemory: 10 },
-            interface: { theme: 'light', fontSize: 'medium', typingEffect: true, soundNotifications: false, compactMode: false },
-            chat: { autoSave: true, confirmDelete: true, enterToSend: true, showTimestamps: false }
+            ai: {
+                temperature: 0.5,
+                maxTokens: 300,
+                personality: "balanced",
+                contextMemory: 10
+            },
+            interface: {
+                theme: "light",
+                fontSize: "medium",
+                typingEffect: true,
+                soundNotifications: false,
+                compactMode: false
+            },
+            chat: {
+                autoSave: true,
+                confirmDelete: true,
+                enterToSend: true,
+                showTimestamps: false
+            }
         };
-
         updateSettingsUI();
         saveUserSettings();
-        alert('Configurações restauradas para o padrão.');
+        alert("Configurações restauradas para o padrão.");
     }
-    
-    function updateSettingsUI() {
-        // AI
-        const tempSlider = document.getElementById('temperature');
-        if (tempSlider) tempSlider.value = userSettings.ai.temperature;
-        const tempValue = document.querySelector('[for="temperature"]')?.nextElementSibling?.querySelector('.setting-value');
-        if (tempValue) tempValue.textContent = userSettings.ai.temperature.toFixed(1);
-        document.getElementById('maxTokens').value = userSettings.ai.maxTokens;
-        document.getElementById('aiPersonality').value = userSettings.ai.personality;
-        document.getElementById('contextMemory').value = userSettings.ai.contextMemory;
-        
-        // Interface
-        document.getElementById('theme').value = userSettings.interface.theme;
-        document.getElementById('fontSize').value = userSettings.interface.fontSize;
-        document.getElementById('typingEffect').checked = userSettings.interface.typingEffect;
-        document.getElementById('soundNotifications').checked = userSettings.interface.soundNotifications;
-        document.getElementById('compactMode').checked = userSettings.interface.compactMode;
-        
-        // Chat
-        document.getElementById('autoSave').checked = userSettings.chat.autoSave;
-        document.getElementById('confirmDelete').checked = userSettings.chat.confirmDelete;
-        document.getElementById('enterToSend').checked = userSettings.chat.enterToSend;
-        document.getElementById('showTimestamps').checked = userSettings.chat.showTimestamps;
+}
+
+/**
+ * Atualiza a interface do modal de configurações com os valores atuais.
+ */
+function updateSettingsUI() {
+    const tempSlider = document.getElementById("temperature");
+    if (tempSlider) {
+        tempSlider.value = userSettings.ai.temperature;
+    }
+    const tempValueDisplay = document.querySelector('[for="temperature"]')?.nextElementSibling?.querySelector(".setting-value");
+    if (tempValueDisplay) {
+        tempValueDisplay.textContent = userSettings.ai.temperature.toFixed(1);
     }
 
-    function applySettings() {
-        applyTheme();
-        applyFontSize();
-        applyCompactMode();
-        applyTimestampDisplay();
+    document.getElementById("maxTokens").value = userSettings.ai.maxTokens;
+    document.getElementById("aiPersonality").value = userSettings.ai.personality;
+    document.getElementById("contextMemory").value = userSettings.ai.contextMemory;
+    document.getElementById("theme").value = userSettings.interface.theme;
+    document.getElementById("fontSize").value = userSettings.interface.fontSize;
+    document.getElementById("typingEffect").checked = userSettings.interface.typingEffect;
+    document.getElementById("soundNotifications").checked = userSettings.interface.soundNotifications;
+    document.getElementById("compactMode").checked = userSettings.interface.compactMode;
+    document.getElementById("autoSave").checked = userSettings.chat.autoSave;
+    document.getElementById("confirmDelete").checked = userSettings.chat.confirmDelete;
+    document.getElementById("enterToSend").checked = userSettings.chat.enterToSend;
+    document.getElementById("showTimestamps").checked = userSettings.chat.showTimestamps;
+}
+
+/**
+ * Aplica todas as configurações visuais.
+ */
+function applySettings() {
+    applyTheme();
+    applyFontSize();
+    applyCompactMode();
+    applyTimestampDisplay();
+}
+
+/**
+ * Aplica o tema (light/dark) ao body.
+ */
+function applyTheme() {
+    document.body.removeAttribute("data-theme");
+    if (userSettings.interface.theme === "dark") {
+        document.body.setAttribute("data-theme", "dark");
+    } else if (userSettings.interface.theme === "auto" && window.matchMedia("(prefers-color-scheme: dark)").matches) {
+        document.body.setAttribute("data-theme", "dark");
+    }
+}
+
+/**
+ * Aplica o tamanho da fonte ao body.
+ */
+function applyFontSize() {
+    document.body.classList.remove("font-small", "font-medium", "font-large");
+    document.body.classList.add(`font-${userSettings.interface.fontSize}`);
+}
+
+/**
+ * Aplica o modo compacto ao body.
+ */
+function applyCompactMode() {
+    document.body.classList.toggle("compact-mode", userSettings.interface.compactMode);
+}
+
+/**
+ * Controla a exibição dos timestamps nas mensagens.
+ */
+function applyTimestampDisplay() {
+    chatMessages.classList.toggle("show-timestamps", userSettings.chat.showTimestamps);
+}
+
+
+    async function updateAboutStats() {
+        // Esta função pode ser expandida para buscar estatísticas reais da API
+        const totalConversations = [].concat(chatHistory.today, chatHistory.yesterday, chatHistory.week, chatHistory.older).length;
+        const totalMessagesEl = document.getElementById('stats-total-messages');
+        const totalConversationsEl = document.getElementById('stats-total-conversations');
+        
+        if (totalConversationsEl) {
+            totalConversationsEl.textContent = totalConversations;
+        }
+        // Exemplo: como você poderia buscar o total de mensagens se a API suportasse
+        // if(totalMessagesEl) {
+        //     const stats = await fetch('/api/stats').then(res => res.json());
+        //     totalMessagesEl.textContent = stats.totalMessages;
+        // }
     }
 
-    function applyTheme() {
-        document.body.removeAttribute('data-theme');
-        if (userSettings.interface.theme === 'dark') {
-            document.body.setAttribute('data-theme', 'dark');
-        } else if (userSettings.interface.theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            document.body.setAttribute('data-theme', 'dark');
+    async function exportConversations() { alert('Funcionalidade de exportar ainda não implementada.'); }
+    async function clearAllHistory() { 
+        if(confirm('Tem certeza que deseja apagar todo o seu histórico de conversas? Esta ação não pode ser desfeita.')) {
+            alert('Funcionalidade de apagar histórico ainda não implementada.'); 
         }
     }
 
-    function applyFontSize() {
-        document.body.classList.remove('font-small', 'font-medium', 'font-large');
-        document.body.classList.add(`font-${userSettings.interface.fontSize}`);
-    }
-
-    function applyCompactMode() {
-        document.body.classList.toggle('compact-mode', userSettings.interface.compactMode);
-    }
-
-    function applyTimestampDisplay() {
-        chatMessages.classList.toggle('show-timestamps', userSettings.chat.showTimestamps);
-    }
 
     //================================================
-    // 8. Funções de Sidebar e Layout
+    // 9. Funções de Sidebar e Layout
     //================================================
-    
+
     function setupSidebar() {
         if (window.innerWidth > 1024) {
             sidebar.classList.add('active');
@@ -649,14 +827,14 @@ document.addEventListener('DOMContentLoaded', () => {
         sidebar.classList.toggle('active');
         sidebarOverlay.classList.toggle('active');
     }
-    
+
     function closeSidebar() {
         sidebar.classList.remove('active');
         sidebarOverlay.classList.remove('active');
     }
 
     //================================================
-    // 9. Funções Auxiliares e Utilitários
+    // 10. Funções Auxiliares e Utilitários
     //================================================
 
     function autoResizeTextarea() {
@@ -676,10 +854,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (sendButton) sendButton.disabled = false;
         if (messageInput) messageInput.disabled = false;
     }
-    
+
     function playNotificationSound() {
         try {
-            const audio = new Audio('data:audio/wav;base64,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');
+            const audio = new Audio('data:audio/wav;base64,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');
             audio.volume = 0.3;
             audio.play().catch(e => console.warn('Som de notificação não pôde ser reproduzido:', e));
         } catch (error) {
@@ -698,10 +876,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const scrollThreshold = 50;
         return chatMessages.scrollHeight - chatMessages.clientHeight <= chatMessages.scrollTop + scrollThreshold;
     }
-    
+
     function scrollToBottom(force = false) {
         if (chatMessages && (force || isScrolledToBottom())) {
-            chatMessages.scrollTo({ top: chatMessages.scrollHeight, behavior: 'smooth' });
+            chatMessages.scrollTo({
+                top: chatMessages.scrollHeight,
+                behavior: 'smooth'
+            });
         }
     }
 
