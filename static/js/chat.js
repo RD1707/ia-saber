@@ -220,39 +220,43 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function handleRegister(e) {
-        e.preventDefault();
-        const name = document.getElementById('reg-name').value;
-        const email = document.getElementById('reg-email').value;
-        const password = document.getElementById('reg-password').value;
-        const confirm = document.getElementById('reg-confirm').value;
+    e.preventDefault();
+    const name = document.getElementById('reg-name').value;
+    const email = document.getElementById('reg-email').value;
+    const password = document.getElementById('reg-password').value;
+    const confirm = document.getElementById('reg-confirm').value;
 
-        if (password !== confirm) {
-            return alert('As senhas não coincidem');
-        }
-
-        try {
-            const res = await fetch('/api/register', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    name,
-                    email,
-                    password
-                })
-            });
-            const data = await res.json();
-            if (res.status !== 201) throw new Error(data.error || 'Erro ao registrar');
-
-            alert('Conta criada com sucesso! Faça login.');
-            document.querySelector('[data-tab="login"]')?.click();
-        } catch (error) {
-            console.error("Erro no registro:", error);
-            alert(error.message);
-        }
+    if (password !== confirm) {
+        return alert('As senhas não coincidem');
     }
 
+    try {
+        const res = await fetch('/api/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, email, password })
+        });
+
+        const data = await res.json();
+
+        // Lógica de erro melhorada
+        if (!res.ok) {
+            // Se a resposta tiver um array 'errors' (da validação), pegue a primeira mensagem.
+            if (data.errors && data.errors.length > 0) {
+                throw new Error(data.errors[0].msg);
+            }
+            // Senão, use a chave 'error' ou uma mensagem padrão.
+            throw new Error(data.error || 'Ocorreu um erro desconhecido ao registrar.');
+        }
+
+        alert('Conta criada com sucesso! Faça login.');
+        document.querySelector('[data-tab="login"]')?.click();
+
+    } catch (error) {
+        console.error("Erro no registro:", error);
+        alert(error.message); // Agora vai mostrar a mensagem de erro específica do servidor
+    }
+}
     function handleLogout() {
         localStorage.removeItem('token');
         currentUser = null;

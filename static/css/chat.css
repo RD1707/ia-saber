@@ -395,3 +395,109 @@ pre:hover .copy-code-btn { opacity: 1; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 10px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
+
+/* Adicionar ao final de static/css/chat.css */
+
+/* Estilos para o Toggle Switch (Checkbox customizado) */
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+    cursor: pointer;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-switch .slider {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--bg-tertiary);
+    border-radius: 24px;
+    transition: .4s;
+}
+
+.toggle-switch .slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    border-radius: 50%;
+    transition: .4s;
+}
+
+.toggle-switch input:checked + .slider {
+    background-color: var(--accent-color);
+}
+
+.toggle-switch input:checked + .slider:before {
+    transform: translateX(20px);
+}
+
+/* Ajuste para o container de controle nos settings */
+.setting-item .setting-control {
+    flex-shrink: 0;
+    margin-left: 1rem;
+}
+
+/* Estilização para os <select> */
+.setting-item select.setting-control {
+    background-color: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 0.5rem 0.75rem;
+    color: var(--text-primary);
+    min-width: 150px;
+}
+
+/* Em static/css/chat.css, substitua o estilo de .chat-history-item */
+
+.chat-history-item {
+    display: flex; /* Alterado para flex */
+    align-items: center; /* Alinha o texto e o ícone */
+    gap: 0.75rem; /* Espaço entre o ícone e o texto */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding: 0.75rem 1.25rem;
+    border-radius: var(--radius-md); /* Aumenta o arredondamento */
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: var(--transition);
+    border: 2px solid transparent; /* Adiciona borda transparente para evitar pulos */
+}
+
+/* Novo ícone antes do texto */
+.chat-history-item::before {
+    content: '\f086'; /* Ícone de comentário do FontAwesome */
+    font-family: "Font Awesome 6 Free";
+    font-weight: 400;
+    font-size: 14px;
+    color: var(--text-tertiary);
+}
+
+.chat-history-item:hover {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+.chat-history-item.active {
+    background: var(--accent-light);
+    color: var(--accent-color);
+    font-weight: 600;
+    border-color: var(--accent-color); /* Adiciona uma borda colorida no item ativo */
+}
+
+.chat-history-item.active::before {
+    color: var(--accent-color);
+}
