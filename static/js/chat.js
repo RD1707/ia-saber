@@ -385,7 +385,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function criarNovaConversa() {
         console.log('🆕 Criando nova conversa...');
-        showThinking();
         try {
             const token = localStorage.getItem('token');
             const response = await fetch('/api/new-conversation', {
