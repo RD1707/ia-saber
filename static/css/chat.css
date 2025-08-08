@@ -16,6 +16,9 @@ html, body {
     overflow: hidden;
 }
 
+
+
+
 :root {
     /* Refined Color System */
     --primary-hue: 220;
@@ -2005,6 +2008,19 @@ body {
     border-radius: 1px;
     animation: cursor-blink 1s infinite;
 }
+
+.welcome-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            margin: auto;
+            color: var(--text-tertiary);
+        }
+.welcome-placeholder .logo-circle { width: 72px; height: 72px; margin-bottom: 1.5rem; }
+.welcome-placeholder .logo-img img { width: 42px; height: 42px; }
+.welcome-placeholder h2 { font-size: 1.5rem; color: var(--text-primary); margin-bottom: 0.5rem; }
 
 @keyframes cursor-blink {
     0%, 50% { opacity: 1; }

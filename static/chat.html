@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SABER - Assistente IA</title>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="css/chat.css">
+</head>
+<body>
+     <div class="login-screen" id="loginScreen">
+        <div class="login-container">
+            <div class="login-logo">
+                <div class="logo-circle">
+                    <div class="logo-img"><img src="assets/logo.png" alt="Logo"></div>
+                </div>
+                <h2 class="login-title">SABER</h2>
+            </div>
+
+            <div class="login-tabs">
+                <button class="login-tab active" data-tab="login">Entrar</button>
+                <button class="login-tab" data-tab="register">Registrar</button>
+            </div>
+
+            <form id="login-form" class="login-form active">
+                <div class="input-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" required>
+                </div>
+                <div class="input-group">
+                    <label for="password">Senha</label>
+                    <input type="password" id="password" required>
+                </div>
+                <button type="submit" class="btn-primary">Entrar</button>
+            </form>
+
+            <form id="register-form" class="login-form">
+                <div class="input-group">
+                    <label for="reg-name">Nome</label>
+                    <input type="text" id="reg-name" required>
+                </div>
+                <div class="input-group">
+                    <label for="reg-email">Email</label>
+                    <input type="email" id="reg-email" required>
+                </div>
+                <div class="input-group">
+                    <label for="reg-password">Senha</label>
+                    <input type="password" id="reg-password" required>
+                </div>
+                <div class="input-group">
+                    <label for="reg-confirm">Confirmar Senha</label>
+                    <input type="password" id="reg-confirm" required>
+                </div>
+                <button type="submit" class="btn-primary">Registrar</button>
+            </form>
+        </div>
+    </div>
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <div class="logo-circle">
+                    <div class="logo-img"><img src="assets/logo.png" alt="Logo"></div>
+                </div>
+                <h2 class="sidebar-title">SABER</h2>
+            </div>
+            <button class="sidebar-toggle" id="sidebarToggle" title="Configurações">
+                <i class="fas fa-cog"></i>
+            </button>
+        </div>
+
+        <div class="sidebar-actions">
+            <button class="new-chat-btn" id="newChatBtn">
+                <i class="fas fa-plus"></i>
+                <span>Nova Conversa</span>
+            </button>
+            <br>
+            <button class="new-chat-btn" id="logoutBtn">
+                <i class="fas fa-minus"></i>
+                <span>Sair</span>
+            </button>
+
+        </div>
+
+        <div class="sidebar-content">
+            <div class="chat-history-section" id="todaySection">
+                <h3 class="section-title">
+                    <i class="fas fa-clock"></i>
+                    Hoje
+                </h3>
+                <div class="chat-history-list" id="todayChats">
+                </div>
+            </div>
+
+            <div class="chat-history-section" id="yesterdaySection">
+                <h3 class="section-title">
+                    <i class="fas fa-calendar-day"></i>
+                    Ontem
+                </h3>
+                <div class="chat-history-list" id="yesterdayChats">
+                </div>
+            </div>
+
+            <div class="chat-history-section" id="weekSection">
+                <h3 class="section-title">
+                    <i class="fas fa-calendar-week"></i>
+                    Últimos 7 dias
+                </h3>
+                <div class="chat-history-list" id="weekChats">
+                </div>
+            </div>
+
+            <div class="chat-history-section" id="olderSection">
+                <h3 class="section-title">
+                    <i class="fas fa-archive"></i>
+                    Conversas antigas
+                </h3>
+                <div class="chat-history-list" id="olderChats">
+                </div>
+            </div>
+
+            <div class="no-conversations" id="noConversations" style="display: none;">
+                <div class="empty-state">
+                    <i class="fas fa-comments"></i>
+                    <p>Nenhuma conversa ainda</p>
+                    <p>Clique em "Nova Conversa" para começar</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <div class="user-avatar">
+                    <i class="fas fa-user"></i>
+                </div>
+                <div class="user-details">
+                    <span class="user-name">Usuário</span>
+                    <span class="user-plan">Versão Gratuita</span>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <div class="settings-modal-overlay" id="settingsModalOverlay">
+        <div class="settings-modal" id="settingsModal">
+            <div class="settings-header">
+                <div class="settings-title">
+                    <i class="fas fa-cog"></i>
+                    <h2>Configurações do SABER</h2>
+                </div>
+                <button class="settings-close" id="settingsCloseBtn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+
+            <div class="settings-content">
+                <div class="settings-tabs">
+                    <button class="settings-tab active" data-tab="ai">
+                        <i class="fas fa-brain"></i>
+                        <span>IA</span>
+                    </button>
+                    <button class="settings-tab" data-tab="interface">
+                        <i class="fas fa-palette"></i>
+                        <span>Interface</span>
+                    </button>
+                    <button class="settings-tab" data-tab="chat">
+                        <i class="fas fa-comments"></i>
+                        <span>Chat</span>
+                    </button>
+                    <button class="settings-tab" data-tab="about">
+                        <i class="fas fa-info-circle"></i>
+                        <span>Sobre</span>
+                    </button>
+                </div>
+
+                <div class="settings-panels">
+                    <div class="settings-panel active" id="ai-panel">
+                        <div class="settings-section">
+                            <h3>Parâmetros da IA</h3>
+                            
+                            <div class="setting-item">
+                                <div class="setting-label">
+                                    <label for="temperature">Criatividade</label>
+                                    <span class="setting-description">Controla a criatividade das respostas</span>
+                                </div>
+                                <div class="setting-control">
+                                    <input type="range" id="temperature" min="0" max="1" step="0.1" value="0.5">
+                                    <span class="setting-value">0.5</span>
+                                </div>
+                            </div>
+
+                            <div class="setting-item">
+                                <div class="setting-label">
+                                    <label for="maxTokens">Tamanho das Respostas</label>
+                                    <span class="setting-description">Máximo de palavras por resposta</span>
+                                </div>
+                                <div class="setting-control">
+                                    <select id="maxTokens">
+                                        <option value="150">Curta (150 palavras)</option>
+                                        <option value="300" selected>Média (300 palavras)</option>
+                                        <option value="500">Longa (500 palavras)</option>
+                                        <option value="800">Muito Longa (800 palavras)</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="setting-item">
+                                <div class="setting-label">
+                                    <label for="aiPersonality">Personalidade</label>
+                                    <span class="setting-description">Estilo de resposta do assistente</span>
+                                </div>
+                                <div class="setting-control">
+                                    <select id="aiPersonality">
+                                        <option value="balanced" selected>Equilibrado</option>
+                                        <option value="friendly">Amigável</option>
+                                        <option value="professional">Profissional</option>
+                                        <option value="creative">Criativo</option>
+                                        <option value="technical">Técnico</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="setting-item">
+                                <div class="setting-label">
+                                    <label for="contextMemory">Memória de Contexto</label>
+                                    <span class="setting-description">Quantas mensagens anteriores considerar</span>
+                                </div>
+                                <div class="setting-control">
+                                    <select id="contextMemory">
+                                        <option value="5">5 mensagens</option>
+                                        <option value="10" selected>10 mensagens</option>
+                                        <option value="20">20 mensagens</option>
+                                        <option value="50">50 mensagens</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-panel" id="interface-panel">
+                        <div class="settings-section">
+                            <h3>Aparência</h3>
+                            
+                            <div class="setting-item">
+                                <div class="setting-label">
+                                    <label for="theme">Tema</label>
+                                    <span class="setting-description">Escolha entre tema claro ou escuro</span>
+                                </div>
+                                <div class="setting-control">
+                                    <select id="theme">
+                                        <option value="light" selected>Claro</option>
+                                        <option value="dark">Escuro</option>
+                                        <option value="auto">Automático</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="setting-item">
+                                <div class="setting-label">
+                                    <label for="fontSize">Tamanho da Fonte</label>
+                                    <span class="setting-description">Ajuste o tamanho do texto</span>
+                                </div>
+                                <div class="setting-control">
+                                    <select id="fontSize">
+                                        <option value="small">Pequeno</option>
+                                        <option value="medium" selected>Médio</option>
+                                        <option value="large">Grande</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="setting-item">
+                                <div class="setting-label">
+                                    <label for="typingEffect">Efeito de Digitação</label>
+                                    <span class="setting-description">Simular digitação nas respostas da IA</span>
+                                </div>
+                                <div class="setting-control">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="typingEffect" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="setting-item">
+                                <div class="setting-label">
+                                    <label for="soundNotifications">Notificações Sonoras</label>
+                                    <span class="setting-description">Sons para novas mensagens</span>
+                                </div>
+                                <div class="setting-control">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="soundNotifications">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="setting-item">
+                                <div class="setting-label">
+                                    <label for="compactMode">Modo Compacto</label>
+                                    <span class="setting-description">Interface mais condensada</span>
+                                </div>
+                                <div class="setting-control">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="compactMode">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-panel" id="chat-panel">
+                        <div class="settings-section">
+                            <h3>Comportamento do Chat</h3>
+                            
+                            <div class="setting-item">
+                                <div class="setting-label">
+                                    <label for="autoSave">Salvar Automaticamente</label>
+                                    <span class="setting-description">Salvar conversas automaticamente</span>
+                                </div>
+                                <div class="setting-control">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="autoSave" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="setting-item">
+                                <div class="setting-label">
+                                    <label for="confirmDelete">Confirmar Exclusão</label>
+                                    <span class="setting-description">Pedir confirmação antes de deletar conversas</span>
+                                </div>
+                                <div class="setting-control">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="confirmDelete" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="setting-item">
+                                <div class="setting-label">
+                                    <label for="enterToSend">Enter para Enviar</label>
+                                    <span class="setting-description">Enviar mensagem com Enter (Shift+Enter para quebra de linha)</span>
+                                </div>
+                                <div class="setting-control">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="enterToSend" checked>
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="setting-item">
+                                <div class="setting-label">
+                                    <label for="showTimestamps">Mostrar Horários</label>
+                                    <span class="setting-description">Exibir horário das mensagens</span>
+                                </div>
+                                <div class="setting-control">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="showTimestamps">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="settings-section">
+                            <h3>Dados</h3>
+                            
+                            <div class="setting-item">
+                                <div class="setting-label">
+                                    <label>Exportar Conversas</label>
+                                    <span class="setting-description">Baixar todas as conversas em formato JSON</span>
+                                </div>
+                                <div class="setting-control">
+                                    <button class="btn-secondary" id="exportChats">
+                                        <i class="fas fa-download"></i>
+                                        Exportar
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="setting-item">
+                                <div class="setting-label">
+                                    <label>Limpar Histórico</label>
+                                    <span class="setting-description">Deletar todas as conversas permanentemente</span>
+                                </div>
+                                <div class="setting-control">
+                                    <button class="btn-danger" id="clearHistory">
+                                        <i class="fas fa-trash"></i>
+                                        Limpar Tudo
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-panel" id="about-panel">
+                        <div class="settings-section">
+                            <div class="about-logo">
+                                <div class="logo-circle large">
+                                    <div class="logo-img"><img src="assets/logo.png" alt="Logo"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="about-info">
+                                <h2>SABER</h2>
+                                <p class="version">Versão 2.0.0</p>
+                                <p class="description">
+                                    Sistema de Análise e Benefício Educacional em Relatório
+                                </p>
+                            </div>
+
+                            <div class="about-details">
+                                <div class="detail-item">
+                                    <i class="fas fa-code"></i>
+                                    <span>Desenvolvido por <strong>Ramon Pires</strong></span>
+                                </div>
+                                <div class="detail-item">
+                                    <i class="fas fa-brain"></i>
+                                    <span>Powered by <strong>Cohere AI</strong></span>
+                                </div>
+                                <div class="detail-item">
+                                    <i class="fas fa-graduation-cap"></i>
+                                    <span>Focado em <strong>Educação</strong></span>
+                                </div>
+                            </div>
+
+                            <div class="about-links">
+                                <a href="#" class="about-link">
+                                    <i class="fab fa-github"></i>
+                                    Código Fonte
+                                </a>
+                                <a href="#" class="about-link">
+                                    <i class="fas fa-question-circle"></i>
+                                    Documentação
+                                </a>
+                                <a href="#" class="about-link">
+                                    <i class="fas fa-bug"></i>
+                                    Reportar Bug
+                                </a>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="settings-footer">
+                <button class="btn-secondary" id="resetSettings">
+                    <i class="fas fa-undo"></i>
+                    Restaurar Padrões
+                </button>
+                <button class="btn-primary" id="saveSettings">
+                    <i class="fas fa-save"></i>
+                    Salvar Configurações
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <main class="main">
+
+        <div class="welcome-screen" id="welcomeScreen">
+            <div class="welcome-container">
+                <div class="welcome-logo">
+                    <div class="logo-circle">
+                        <div class="logo-img"><img src="assets/logo.png" alt="Logo"></div>
+                    </div>
+                </div>
+                <h1 class="welcome-title">Bem-vindo ao SABER</h1>
+                
+                <div class="welcome-input-container">
+                    <form id="welcome-form">
+                        <input type="text" id="welcome-input" placeholder="Como posso ajudar você hoje?" autofocus>
+                        <button type="submit" id="welcome-submit">
+                            <i class="fas fa-arrow-up"></i>
+                        </button>
+                    </form>
+                </div>
+                
+                <div class="powered-by">
+                    <span>SABER • Desenvolvido por Ramon Pires</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="app-container" id="appContainer">
+            <div class="chat-container">
+                <div class="chat-header">
+                    <div class="header-controls">
+                        <button class="header-menu-btn" id="headerMenuBtn">
+                            <i class="fas fa-bars"></i>
+                        </button>
+                        <div class="header-logo">
+                            <h1 class="header-title">SABER</h1>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="chat-messages" id="chat-messages">
+                </div>
+                
+                <div class="thinking-indicator" id="thinking">
+                    <div class="thinking-dots">
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                        <div class="dot"></div>
+                    </div>
+                    <span>Processando...</span>
+                </div>
+                
+                <div class="chat-input-container">
+                    <form id="message-form">
+                        <div class="input-wrapper">
+                            <textarea id="message-input" placeholder="Digite sua mensagem..." rows="1"></textarea>
+                            <button type="submit" id="send-button">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </div>
+                        <div class="input-footer">
+                            <span class="disclaimer">SABER pode cometer erros. Verifique informações importantes.</span>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/chat.js"></script>
+</body>
+</html>
