@@ -108,7 +108,108 @@
 
     <div class="settings-modal-overlay" id="settingsModalOverlay">
         <div class="settings-modal" id="settingsModal">
+            <div class="settings-header">
+                <h2 class="settings-title"><i class="fas fa-cog"></i> Configurações</h2>
+                <button class="settings-close" id="settingsCloseBtn">&times;</button>
             </div>
+            <div class="settings-content">
+                <div class="settings-tabs">
+                    <button class="settings-tab active" data-tab="ai"><i class="fas fa-robot"></i> IA</button>
+                    <button class="settings-tab" data-tab="interface"><i class="fas fa-palette"></i> Interface</button>
+                    <button class="settings-tab" data-tab="chat"><i class="fas fa-comments"></i> Chat</button>
+                    <button class="settings-tab" data-tab="about"><i class="fas fa-info-circle"></i> Sobre</button>
+                </div>
+                <div class="settings-panels">
+                    <div class="settings-panel active" id="ai-panel">
+                        <div class="settings-section">
+                            <h3>Ajustes da IA</h3>
+                            <div class="setting-item">
+                                <div>
+                                    <label for="temperature">Criatividade (Temperatura)</label>
+                                    <p class="setting-description">Valores baixos geram respostas mais diretas, valores altos geram respostas mais criativas.</p>
+                                </div>
+                                <div class="setting-control">
+                                    <input type="range" id="temperature" min="0" max="1" step="0.1" value="0.5">
+                                    <span class="setting-value">0.5</span>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <label for="maxTokens">Tamanho da Resposta</label>
+                                <select id="maxTokens" class="setting-control">
+                                    <option value="150">Curta</option>
+                                    <option value="300" selected>Média</option>
+                                    <option value="600">Longa</option>
+                                    <option value="1000">Muito Longa</option>
+                                </select>
+                            </div>
+                            <div class="setting-item">
+                                <label for="aiPersonality">Personalidade da IA</label>
+                                <select id="aiPersonality" class="setting-control">
+                                    <option value="balanced" selected>Equilibrada</option>
+                                    <option value="friendly">Amigável</option>
+                                    <option value="professional">Profissional</option>
+                                    <option value="creative">Criativa</option>
+                                    <option value="technical">Técnica</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="settings-panel" id="interface-panel">
+                        <div class="settings-section">
+                            <h3>Aparência</h3>
+                            <div class="setting-item">
+                                <label for="theme">Tema</label>
+                                <select id="theme" class="setting-control">
+                                    <option value="light">Claro</option>
+                                    <option value="dark">Escuro</option>
+                                    <option value="auto">Automático</option>
+                                </select>
+                            </div>
+                             <div class="setting-item">
+                                <label for="compactMode">Modo Compacto</label>
+                                <input type="checkbox" id="compactMode" class="toggle-switch">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="settings-panel" id="chat-panel">
+                         <div class="settings-section">
+                            <h3>Comportamento do Chat</h3>
+                            <div class="setting-item">
+                                <label for="enterToSend">Enviar com Enter</label>
+                                <input type="checkbox" id="enterToSend" class="toggle-switch" checked>
+                            </div>
+                             <div class="setting-item">
+                                <label for="soundNotifications">Notificações Sonoras</label>
+                                <input type="checkbox" id="soundNotifications" class="toggle-switch">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="settings-panel" id="about-panel">
+                        <div class="settings-section">
+                            <h3>Gerenciar Dados</h3>
+                            <div class="setting-item">
+                                <div>
+                                    <label>Exportar Conversas</label>
+                                    <p class="setting-description">Baixe todo o seu histórico de conversas em formato JSON.</p>
+                                </div>
+                                <button id="exportChats" class="btn-secondary">Exportar</button>
+                            </div>
+                            <div class="setting-item">
+                                <div>
+                                    <label>Limpar Histórico</label>
+                                    <p class="setting-description">Esta ação é irreversível e apagará todas as suas conversas.</p>
+                                </div>
+                                <button id="clearHistory" class="btn-danger">Limpar Tudo</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="settings-footer">
+                <button id="resetSettings" class="btn-secondary">Restaurar Padrões</button>
+                <button id="saveSettings" class="btn-primary">Salvar e Fechar</button>
+            </div>
+        </div>
     </div>
 
     <script src="js/chat.js"></script>

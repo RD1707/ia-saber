@@ -341,7 +341,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // *** FUNÇÃO ADICIONADA ***
     function addMessageToChat(role, text, isAi = false) {
         const messageWrapper = document.createElement('div');
         messageWrapper.classList.add('message', role);
@@ -366,7 +365,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const messageText = document.createElement('div');
         messageText.classList.add('message-text');
 
-        // Simples conversão de markdown (negrito e itálico) para HTML
         let htmlContent = escapeHtml(text)
             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
             .replace(/\*(.*?)\*/g, '<em>$1</em>');
@@ -457,11 +455,10 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
     
-    // *** FUNÇÃO ADICIONADA ***
     function preencherSecao(containerId, conversas) {
         const container = document.getElementById(containerId);
         const section = document.getElementById(containerId.replace('Chats', 'Section'));
-        if (!container || !section || conversas.length === 0) {
+        if (!container || !section || !conversas || conversas.length === 0) {
             if(section) section.style.display = 'none';
             return;
         }
@@ -480,7 +477,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             item.addEventListener('click', async (e) => {
                 e.preventDefault();
-                currentConversationId = conv.id;
                 await carregarConversa(conv.id);
             });
             container.appendChild(item);
@@ -488,7 +484,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function carregarConversa(id) {
-        showThinking();
+        // ALTERAÇÃO: Removido o showThinking() daqui
+        limparInterface(); // Limpa a tela antes de carregar
+        currentConversationId = id; // Define o ID antes de qualquer coisa
+        
+        // Ativa o item na barra lateral
+        document.querySelectorAll('.chat-history-item.active').forEach(i => i.classList.remove('active'));
+        const activeItem = document.querySelector(`.chat-history-item[data-id="${id}"]`);
+        if(activeItem) activeItem.classList.add('active');
+
         try {
             const token = localStorage.getItem('token');
             const response = await fetch(`/api/conversation/${id}`, {
@@ -497,20 +501,22 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!response.ok) throw new Error('Não foi possível carregar a conversa.');
 
             const data = await response.json();
-            chatMessages.innerHTML = '';
-            data.messages.forEach(msg => {
-                addMessageToChat(msg.role, msg.content, msg.role === 'assistant');
-            });
-            currentConversationId = id;
-            document.querySelectorAll('.chat-history-item.active').forEach(i => i.classList.remove('active'));
-            document.querySelector(`.chat-history-item[data-id="${id}"]`).classList.add('active');
+            if(data.messages && data.messages.length > 0) {
+                data.messages.forEach(msg => {
+                    addMessageToChat(msg.role, msg.content, msg.role === 'assistant');
+                });
+            } else {
+                 adicionarMensagemDeBoasVindas(); // Mostra placeholder se a conversa estiver vazia
+            }
+            
             if (window.innerWidth <= 1024) closeSidebar();
 
         } catch(err) {
             console.error("Erro ao carregar conversa:", err);
             alert(err.message);
-        } finally {
-            hideThinking();
+            // Em caso de erro, volta para a tela de boas-vindas
+            currentConversationId = null;
+            limparInterface();
         }
     }
 
@@ -537,7 +543,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         setupSettingsControls();
         const saveSettingsBtn = document.getElementById('saveSettings');
-        if (saveSettingsBtn) saveSettingsBtn.addEventListener('click', saveUserSettings);
+        if (saveSettingsBtn) saveSettingsBtn.addEventListener('click', () => {
+             saveUserSettings();
+             closeSettingsModal();
+        });
         const resetSettingsBtn = document.getElementById('resetSettings');
         if (resetSettingsBtn) resetSettingsBtn.addEventListener('click', resetUserSettings);
         setupSpecialControls();
@@ -564,240 +573,151 @@ document.addEventListener('DOMContentLoaded', () => {
         settingsPanels.forEach(panel => panel.classList.toggle('active', panel.id === `${tabName}-panel`));
     }
 
-    /**
- * Adiciona os event listeners aos controles do modal de configurações.
- */
-function setupSettingsControls() {
-    const temperatureSlider = document.getElementById("temperature");
-    const temperatureValueDisplay = document.querySelector('[for="temperature"]')?.nextElementSibling?.querySelector(".setting-value");
-
-    if (temperatureSlider && temperatureValueDisplay) {
-        temperatureSlider.addEventListener("input", e => {
-            const value = parseFloat(e.target.value);
-            userSettings.ai.temperature = value;
-            temperatureValueDisplay.textContent = value.toFixed(1);
+    function setupSettingsControls() {
+        const temperatureSlider = document.getElementById("temperature");
+        const temperatureValueDisplay = document.querySelector('[for="temperature"]')?.parentElement?.querySelector(".setting-value");
+        if (temperatureSlider && temperatureValueDisplay) {
+            temperatureSlider.addEventListener("input", e => {
+                const value = parseFloat(e.target.value);
+                temperatureValueDisplay.textContent = value.toFixed(1);
+            });
+        }
+        // Listener para salvar o valor ao soltar o slider
+        temperatureSlider?.addEventListener("change", e => {
+            userSettings.ai.temperature = parseFloat(e.target.value);
         });
+
+        document.getElementById("maxTokens")?.addEventListener("change", e => userSettings.ai.maxTokens = parseInt(e.target.value));
+        document.getElementById("aiPersonality")?.addEventListener("change", e => userSettings.ai.personality = e.target.value);
+        document.getElementById("theme")?.addEventListener("change", e => { userSettings.interface.theme = e.target.value; applyTheme(); });
+        document.getElementById("compactMode")?.addEventListener("change", e => { userSettings.interface.compactMode = e.target.checked; applyCompactMode(); });
+        document.getElementById("enterToSend")?.addEventListener("change", e => userSettings.chat.enterToSend = e.target.checked);
+        document.getElementById("soundNotifications")?.addEventListener("change", e => userSettings.interface.soundNotifications = e.target.checked);
     }
 
-    document.getElementById("maxTokens")?.addEventListener("change", e => {
-        userSettings.ai.maxTokens = parseInt(e.target.value);
-    });
-    document.getElementById("aiPersonality")?.addEventListener("change", e => {
-        userSettings.ai.personality = e.target.value;
-    });
-    document.getElementById("contextMemory")?.addEventListener("change", e => {
-        userSettings.ai.contextMemory = parseInt(e.target.value);
-    });
-    document.getElementById("theme")?.addEventListener("change", e => {
-        userSettings.interface.theme = e.target.value;
-        applyTheme();
-    });
-    document.getElementById("fontSize")?.addEventListener("change", e => {
-        userSettings.interface.fontSize = e.target.value;
-        applyFontSize();
-    });
-    document.getElementById("typingEffect")?.addEventListener("change", e => {
-        userSettings.interface.typingEffect = e.target.checked;
-    });
-    document.getElementById("soundNotifications")?.addEventListener("change", e => {
-        userSettings.interface.soundNotifications = e.target.checked;
-    });
-    document.getElementById("compactMode")?.addEventListener("change", e => {
-        userSettings.interface.compactMode = e.target.checked;
-        applyCompactMode();
-    });
-    document.getElementById("autoSave")?.addEventListener("change", e => {
-        userSettings.chat.autoSave = e.target.checked;
-    });
-    document.getElementById("confirmDelete")?.addEventListener("change", e => {
-        userSettings.chat.confirmDelete = e.target.checked;
-    });
-    document.getElementById("enterToSend")?.addEventListener("change", e => {
-        userSettings.chat.enterToSend = e.target.checked;
-    });
-    document.getElementById("showTimestamps")?.addEventListener("change", e => {
-        userSettings.chat.showTimestamps = e.target.checked;
-        applyTimestampDisplay();
-    });
-}
-
-/**
- * Adiciona listeners para os controles especiais (exportar, limpar).
- */
-function setupSpecialControls() {
-    document.getElementById("exportChats")?.addEventListener("click", exportConversations);
-    document.getElementById("clearHistory")?.addEventListener("click", clearAllHistory);
-}
-
-/**
- * Carrega as configurações do usuário salvas no localStorage.
- */
-function loadUserSettings() {
-    try {
-        const savedSettings = localStorage.getItem("saber_settings");
-        if (savedSettings) {
-            const parsedSettings = JSON.parse(savedSettings);
-            // Faz um merge para garantir que novas configurações não quebrem o app
-            userSettings.ai = { ...userSettings.ai, ...parsedSettings.ai };
-            userSettings.interface = { ...userSettings.interface, ...parsedSettings.interface };
-            userSettings.chat = { ...userSettings.chat, ...parsedSettings.chat };
-        }
-    } catch (e) {
-        console.warn("Erro ao carregar configurações:", e);
+    function setupSpecialControls() {
+        document.getElementById("exportChats")?.addEventListener("click", exportConversations);
+        document.getElementById("clearHistory")?.addEventListener("click", clearAllHistory);
     }
-}
 
-/**
- * Salva as configurações atuais do usuário no localStorage.
- */
-function saveUserSettings() {
-    try {
-        localStorage.setItem("saber_settings", JSON.stringify(userSettings));
-        applySettings();
-        const saveButton = document.getElementById("saveSettings");
-
-        if (saveButton) {
-            const originalText = saveButton.innerHTML;
-            saveButton.innerHTML = '<i class="fas fa-check"></i> Salvo!';
-            saveButton.disabled = true;
-            saveButton.style.background = "hsl(120, 60%, 50%)";
-
-            setTimeout(() => {
-                saveButton.innerHTML = originalText;
-                saveButton.style.background = "";
-                saveButton.disabled = false;
-            }, 2000);
-        }
-    } catch (e) {
-        console.error("Erro ao salvar configurações:", e);
-        alert("Erro ao salvar configurações.");
-    }
-}
-
-/**
- * Restaura as configurações para os valores padrão.
- */
-function resetUserSettings() {
-    if (confirm("Tem certeza que deseja restaurar as configurações padrão?")) {
-        userSettings = {
-            ai: {
-                temperature: 0.5,
-                maxTokens: 300,
-                personality: "balanced",
-                contextMemory: 10
-            },
-            interface: {
-                theme: "light",
-                fontSize: "medium",
-                typingEffect: true,
-                soundNotifications: false,
-                compactMode: false
-            },
-            chat: {
-                autoSave: true,
-                confirmDelete: true,
-                enterToSend: true,
-                showTimestamps: false
+    function loadUserSettings() {
+        try {
+            const savedSettings = localStorage.getItem("saber_settings");
+            if (savedSettings) {
+                const parsedSettings = JSON.parse(savedSettings);
+                userSettings.ai = { ...userSettings.ai, ...parsedSettings.ai };
+                userSettings.interface = { ...userSettings.interface, ...parsedSettings.interface };
+                userSettings.chat = { ...userSettings.chat, ...parsedSettings.chat };
             }
-        };
-        updateSettingsUI();
-        saveUserSettings();
-        alert("Configurações restauradas para o padrão.");
-    }
-}
-
-/**
- * Atualiza a interface do modal de configurações com os valores atuais.
- */
-function updateSettingsUI() {
-    const tempSlider = document.getElementById("temperature");
-    if (tempSlider) {
-        tempSlider.value = userSettings.ai.temperature;
-    }
-    const tempValueDisplay = document.querySelector('[for="temperature"]')?.nextElementSibling?.querySelector(".setting-value");
-    if (tempValueDisplay) {
-        tempValueDisplay.textContent = userSettings.ai.temperature.toFixed(1);
+        } catch (e) {
+            console.warn("Erro ao carregar configurações:", e);
+        }
     }
 
-    document.getElementById("maxTokens").value = userSettings.ai.maxTokens;
-    document.getElementById("aiPersonality").value = userSettings.ai.personality;
-    document.getElementById("contextMemory").value = userSettings.ai.contextMemory;
-    document.getElementById("theme").value = userSettings.interface.theme;
-    document.getElementById("fontSize").value = userSettings.interface.fontSize;
-    document.getElementById("typingEffect").checked = userSettings.interface.typingEffect;
-    document.getElementById("soundNotifications").checked = userSettings.interface.soundNotifications;
-    document.getElementById("compactMode").checked = userSettings.interface.compactMode;
-    document.getElementById("autoSave").checked = userSettings.chat.autoSave;
-    document.getElementById("confirmDelete").checked = userSettings.chat.confirmDelete;
-    document.getElementById("enterToSend").checked = userSettings.chat.enterToSend;
-    document.getElementById("showTimestamps").checked = userSettings.chat.showTimestamps;
-}
-
-/**
- * Aplica todas as configurações visuais.
- */
-function applySettings() {
-    applyTheme();
-    applyFontSize();
-    applyCompactMode();
-    applyTimestampDisplay();
-}
-
-/**
- * Aplica o tema (light/dark) ao body.
- */
-function applyTheme() {
-    document.body.removeAttribute("data-theme");
-    if (userSettings.interface.theme === "dark") {
-        document.body.setAttribute("data-theme", "dark");
-    } else if (userSettings.interface.theme === "auto" && window.matchMedia("(prefers-color-scheme: dark)").matches) {
-        document.body.setAttribute("data-theme", "dark");
+    function saveUserSettings() {
+        try {
+            localStorage.setItem("saber_settings", JSON.stringify(userSettings));
+            applySettings();
+        } catch (e) {
+            console.error("Erro ao salvar configurações:", e);
+            alert("Erro ao salvar configurações.");
+        }
     }
-}
 
-/**
- * Aplica o tamanho da fonte ao body.
- */
-function applyFontSize() {
-    document.body.classList.remove("font-small", "font-medium", "font-large");
-    document.body.classList.add(`font-${userSettings.interface.fontSize}`);
-}
+    function resetUserSettings() {
+        if (confirm("Tem certeza que deseja restaurar as configurações padrão?")) {
+            userSettings = {
+                ai: { temperature: 0.5, maxTokens: 300, personality: "balanced", contextMemory: 10 },
+                interface: { theme: "light", compactMode: false, soundNotifications: false },
+                chat: { enterToSend: true }
+            };
+            updateSettingsUI();
+            saveUserSettings();
+            alert("Configurações restauradas para o padrão.");
+        }
+    }
 
-/**
- * Aplica o modo compacto ao body.
- */
-function applyCompactMode() {
-    document.body.classList.toggle("compact-mode", userSettings.interface.compactMode);
-}
+    function updateSettingsUI() {
+        const tempSlider = document.getElementById("temperature");
+        if (tempSlider) tempSlider.value = userSettings.ai.temperature;
+        
+        const tempValueDisplay = document.querySelector('[for="temperature"]')?.parentElement?.querySelector(".setting-value");
+        if (tempValueDisplay) tempValueDisplay.textContent = userSettings.ai.temperature.toFixed(1);
 
-/**
- * Controla a exibição dos timestamps nas mensagens.
- */
-function applyTimestampDisplay() {
-    chatMessages.classList.toggle("show-timestamps", userSettings.chat.showTimestamps);
-}
+        document.getElementById("maxTokens").value = userSettings.ai.maxTokens;
+        document.getElementById("aiPersonality").value = userSettings.ai.personality;
+        document.getElementById("theme").value = userSettings.interface.theme;
+        document.getElementById("compactMode").checked = userSettings.interface.compactMode;
+        document.getElementById("enterToSend").checked = userSettings.chat.enterToSend;
+        document.getElementById("soundNotifications").checked = userSettings.interface.soundNotifications;
+    }
 
+    function applySettings() {
+        applyTheme();
+        applyCompactMode();
+    }
+
+    function applyTheme() {
+        document.body.setAttribute("data-theme", userSettings.interface.theme);
+    }
+
+    function applyCompactMode() {
+        document.body.classList.toggle("compact-mode", userSettings.interface.compactMode);
+    }
 
     async function updateAboutStats() {
-        // Esta função pode ser expandida para buscar estatísticas reais da API
         const totalConversations = [].concat(chatHistory.today, chatHistory.yesterday, chatHistory.week, chatHistory.older).length;
-        const totalMessagesEl = document.getElementById('stats-total-messages');
-        const totalConversationsEl = document.getElementById('stats-total-conversations');
-        
-        if (totalConversationsEl) {
-            totalConversationsEl.textContent = totalConversations;
-        }
-        // Exemplo: como você poderia buscar o total de mensagens se a API suportasse
-        // if(totalMessagesEl) {
-        //     const stats = await fetch('/api/stats').then(res => res.json());
-        //     totalMessagesEl.textContent = stats.totalMessages;
-        // }
     }
 
-    async function exportConversations() { alert('Funcionalidade de exportar ainda não implementada.'); }
+    // ALTERAÇÃO: Implementação da funcionalidade de exportar
+    async function exportConversations() {
+        console.log('Exportando conversas...');
+        const token = localStorage.getItem('token');
+        try {
+            const response = await fetch('/api/export', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!response.ok) throw new Error('Falha ao exportar conversas.');
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            const filename = response.headers.get('content-disposition')?.split('filename=')[1] || 'saber_export.json';
+            a.download = filename.replace(/"/g, ''); // Remove aspas do nome do arquivo
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            a.remove();
+            alert('Seu histórico está sendo baixado!');
+        } catch (error) {
+            console.error('Erro ao exportar:', error);
+            alert('Não foi possível exportar seu histórico.');
+        }
+    }
+    
+    // ALTERAÇÃO: Implementação da funcionalidade de limpar histórico
     async function clearAllHistory() { 
-        if(confirm('Tem certeza que deseja apagar todo o seu histórico de conversas? Esta ação não pode ser desfeita.')) {
-            alert('Funcionalidade de apagar histórico ainda não implementada.'); 
+        if(confirm('Tem certeza que deseja apagar TODO o seu histórico de conversas? Esta ação não pode ser desfeita.')) {
+             const token = localStorage.getItem('token');
+            try {
+                const response = await fetch('/api/clear-all', {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!response.ok) throw new Error('Falha ao limpar o histórico.');
+
+                await carregarHistorico(); // Recarrega o histórico (que estará vazio)
+                currentConversationId = null;
+                limparInterface(); // Limpa a tela de chat
+                alert('Seu histórico foi apagado com sucesso.');
+                closeSettingsModal();
+
+            } catch (error) {
+                console.error('Erro ao limpar histórico:', error);
+                alert('Não foi possível apagar seu histórico.');
+            }
         }
     }
 
@@ -857,7 +777,7 @@ function applyTimestampDisplay() {
 
     function playNotificationSound() {
         try {
-            const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DwuGoiByeM0fPSfiwGK4PK7+CVSA0PVKzn77BdGAg+ltryxnkpBSl+zPLaizsIGGS57OihUQwKTKXh8bhlHgg2jdXzzn0vBSF0xe/eizEIHWq+8OKZTgwNUarm7q9bFgpFnt/wuWkiCCaKz/LNeSsFJHfH8N+QQAoUXrTp66hVFApGn+DwuGoiByeM0fPSfiwGK4PK7+CVSA0PVKzn77BdGAg+ltryxnkpBSl+zPLaizsIGGS57OihUQwKTKXh8bhlHgg2jdXzzn0vBSF0xe/eizEIHWq+8OKZTgwNUarm7q9bFgpFnt/wuWkiCCaKz/LNeSsFJHfH8N+QQAoUXrTp66hVFApGn+DwuGoiByeM0fPSfiwGK4PK7+CVSA0PVKzn77BdGAg+ltryxnkpBSl+zPLaizsIGGS57OihUQwKTKXh8bhlHgg2jdXzzn0vBSF0xe/eizEIHWq+8OKZTgwNUarm7q9bFgpFnt/wuWkiCCaKz/LNeSsFJHfH8N+QQAoUXrTp66hVFApGn+DwuGoiByeM0fPSfiwGK4PK7+CVSA0PVKzn77BdGAg+ltryxnkpBSl+zPLaizsIGGS57OihUQwKTKXh8bhlHgg2jdXzzn0vBSF0xe/eizEIHWq+8OKZTgwNUarm7q9bFgpFnt/wuWkiCCaKz/LNeSsFJHfH8N+QQAoUXrTp66hVFApGn+DwuGoiByeM0fPSfiwGK4PK7+CVSA0PVKzn77BdGAg+ltryxnkpBSl+zPLaizsIGGS57OihUQwKTKXh8bhlHgg2jdXzzn0vBSF0xe/eizEIHWq+8OKZTgwNUarm7q9bFgpFnt/wuWkiCCaKz/LNeSsFJHfH8N+QQAoUXrTp66hVFApGn+DwuGoiByeM0fPSfiwGK4PK7+CVSA0PVKzn77BdGAg+ltryxnkpBSl+zPLaizsIGGS57OihUQwKTKXh8bhlHgg2jdXzzn0vBSF0xe/eizEIHWq+8OKZTgwNUarm7q9bFgpFnt/wuWkiCCaKz/LNeSsFJHfH8N+QQAoUXrTp66hVFApGn+DwuGoiByeM0fPSfiwGK4PK7+CVSA0PVKzn77BdGAg+ltryxnkpBSl+zPLaizsIGGS57OihUQwKTKXh8bhlHgg2jdXzzn0vBSF0xe/eizEIHWq+8OKZTgwNUarm7q9bFgpFnt/wuWkiCCaKz/LNeSsFJHfH8N+QQAoUXrTp66hVFApGn+DwuGoiByeM0fPSfiwGK4PK7+CVSA0PVKzn77BdGAg+ltryxnkpBSl+zPLaizsIGGS57OihUQwKTKXh8bhlHgg2jdXzzn0vBSF0xe/eizEIHWq+8OKZTgwNUarm7q9bFgpFnt/wuWkiCCaKz/LNeSsFJHfH8N+QQAoUXrTp66hVFApGn+DwuGoiByeM0fPSfiwGK4PK7+CVSA0PVKzn77BdGAg+ltryxnkpBSl+zPLaizsIGGS57OihUQwKTKXh8bhlHgg2jdXzzn0vBSF0xe/eizEIHWq+8OKZTgwNUarm7q9bFgpFnt/wuWkiCCaKz/LNeSsFJHfH8N+QQAoUXrTp66hVFApGn+DwuGoiByeM0fPSfiwGK4PK7+CVSA0PVKzn77BdGAg+ltryxnkpBSl+zPLaizsIGGS57OihUQwKTKXh8bhlHgg2jdXzzn0vBSF0xe/eizEIHWq+8OKZTgwNUarm7q9bFgpFnt/wuWkiCCaKz/LNeSsFJHfH8N+QQAoUXrTp66hVFApGn+DwuGoiByeM0fPSfiwGK4PK7+CVSA0PVKzn77BdGAg+ltryxnkpBSl+zPLaizsIGGS57OihUQwKTKXh8bhlHgg2jdXzzn0vBSF0xe/eizEIHWq+8OKZTgwNUarm7q9bFgpFnt/wuWkiCCaKz/LNeSsFJHfH8N+QQAoUXrTp66hVFApGn+DwuGoiByeM0fPSfiwGK4PK7+CVSA0PVKzn77BdGAg+ltryxnkpBSl+zPLaizsIGGS57OihUQwKTKXh8bhlHgg2jdXzzn0vBSF0xe/eizEIHWq+8OKZTgwNUarm7q9bFgpFnt/wuWkiCCaKz/LNeSsFJHfH8N+QQAoUXrTp66hVFApGn+DwuGoiByeM0fPSfiwGK4PK7+CVSA0PVKzn77BdGAg+ltryxnkpBSl+zPLaizsIGGS57OihUQwKTKXh8bhlHgg2jdXzzn0vBSF0xe/eizEIHWq+8OKZTgwNUarm7q9bFgpFnt/wuWkiCCaKz/LNeSsFJHfH8N+QQAoUXrTp66hVFApGn+DwuGoiByeM0fPSfiwGK4PK7+CVSA0PVKzn77BdGAg+ltryxnkpBSl+zPLaizsIGGS57OihUQwKTKXh8bhlHgg2jdXzzn0vBSF0xe/eizEIHWq+8OKZTgwNUarm7q9bFgpFnt/wuWkiCCaKz/LNeSsFJHfH8N+QQAoUXrTp66hVFApGn+DwuGoiByeM0fPSfiwGK4PK7+CVSA0PVKzn77BdGAg+ltryxnkpBSl+zPLaizsIGGS57OihUQwKTKXh8bhlHgg2jdXzzn0vBSF0xe/eizEIHWq+8OKZTgwNUarm7q9bFgpFnt/wuWkiCCaKz/LNeSsFJHfH8N+QQAoUXrTp66hVFApGn+DwuGoiByeM0fPSfiwGK4PK7+CVSA0PVKzn77BdGAg+ltryxnkpBSl+zPLaizsIGGS57OihUQwKTKXh8bhlHgg2jdXzzn0vBSF0xe/eizEIHWq+8OKZTgwNUarm7q9bFgpFnt/wuWkiCCaKz/LNeSsFJHfH8N+QQAoUXrTp66hVFApGn+DwuGoiByeM0fPSfiwGK4PK7+CVSA0PVKzn77BdGAg+ltryxnkpBSl+zPLaizsIGGS57OihUQwKTKXh8bhlHgg2jdXzzn0vBSF0xe/eizEIHWq+8OKZTgwNUarm7q9bFgpFnt/wuWkiCCaKz/LNeSsFJHfH8N+QQAoUXrTp66hVFApGn+DwuGoiByeM0fPSfiwGK4PK7+CVSA0PVKzn77BdGAg+ltryxnkpBSl+zPLaizsIGGS57OihUQwKTKXh8bhlHgg2jdXzzn0vBSF0xe/eizEIHWq+8OKZTgwNUarm7q9bFgpFnt/wuWkiCCaKz/LNeSsFJHfH8N+QQAoUXrTp66hVFApGn+DwuGoiByeM0fPSfiwGK4PK7+CVSA0PVKzn77BdGAg+ltryxnkpBSl+zPLaizsIGGS57OihUQwKTKXh8bhlHgg2jdXzzn0vBSF0xe/eizEIHWq+8OKZTgwNUarm7q9bFgpFnt/wuWkiCCaKz/LNeSsFJHfH8N+QQAoUXrTp66hVFApGn+DwuGoiByeM0fPSfiwGK4PK7+CVSA0PVKzn77BdGAg+ltryxnkpBSl+zPLaizsIGGS57OihUQwKTKXh8bhlHgg2jdXzzn0vBSF0xe/eizEIHWq+8OKZTgwNUarm7q9bFgpFnt/wuWkiCCaKz/LNeSsFJHfH8N+QQAoUXrTp66hVFApGn+DwuGoiByeM0fPSfiwGK4PK7+CVSA0PVKzn77BdGAg=');
+            const audio = new Audio('data:audio/wav;base64,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');
             audio.volume = 0.3;
             audio.play().catch(e => console.warn('Som de notificação não pôde ser reproduzido:', e));
         } catch (error) {
