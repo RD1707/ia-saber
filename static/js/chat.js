@@ -93,17 +93,19 @@ document.addEventListener('DOMContentLoaded', () => {
      * Exibe uma mensagem de boas-vindas na área de chat quando nenhuma conversa está ativa.
      */
     function adicionarMensagemDeBoasVindas() {
-        if (!chatMessages) return;
-        chatMessages.innerHTML = `
-            <div class="welcome-placeholder">
-                <div class="logo-circle">
-                    <div class="logo-img"><img src="assets/logo.png" alt="Logo"></div>
-                </div>
-                <h2>Bem-vindo ao SABER</h2>
-                <p>Selecione uma conversa ou inicie uma nova para começar.</p>
+    if (!chatMessages) return;
+    chatMessages.innerHTML = `
+        <div class="welcome-placeholder">
+            <img src="assets/logo.png" alt="SABER Logo" class="welcome-logo">
+            <h2>Como posso te ajudar hoje?</h2>
+            <div class="suggested-prompts">
+                <button class="prompt-btn">Explique a teoria da relatividade</button>
+                <button class="prompt-btn">Crie um plano de estudos para biologia</button>
+                <button class="prompt-btn">Como funciona uma rede neural?</button>
             </div>
-        `;
-    }
+        </div>
+    `;
+}
 
     /**
      * Limpa a área de chat e exibe a mensagem de boas-vindas.
@@ -702,6 +704,6 @@ document.addEventListener('DOMContentLoaded', () => {
             chatMessages.scrollTo({ top: chatMessages.scrollHeight, behavior: 'smooth' });
         }
     }
-    
+
     initializeApp();
 });
