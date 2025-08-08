@@ -1,22 +1,20 @@
-// db.js - VERSÃO ATUALIZADA
-
 const { Pool } = require('pg');
 const { v4: uuidv4 } = require('uuid');
 const bcrypt = require('bcrypt');
 require('dotenv').config();
 
-// Configuração do Pool usando parâmetros separados em vez de uma connection string
+// Validação para garantir que a DATABASE_URL foi definida no .env
+if (!process.env.DATABASE_URL) {
+  throw new Error('Erro: A variável de ambiente DATABASE_URL não foi definida.');
+}
+
+// Configuração do Pool usando a string de conexão direta
 const pool = new Pool({
-  user: process.env.DB_USER,
-  host: process.env.DB_HOST,
-  database: process.env.DB_DATABASE,
-  password: process.env.DB_PASSWORD,
-  port: process.env.DB_PORT,
+  connectionString: process.env.DATABASE_URL,
   ssl: {
     rejectUnauthorized: false
   }
 });
-
 async function initializeDatabase() {
   try {
     // O restante do arquivo continua exatamente o mesmo...
