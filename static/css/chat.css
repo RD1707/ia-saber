@@ -178,11 +178,13 @@ html, body {
     color: var(--text-tertiary);
     transition: var(--transition);
     text-decoration: none;
+    text-overflow: ellipsis;
 }
 
 .chat-history-item:hover {
     background: var(--bg-tertiary);
     color: var(--text-primary);
+    text-overflow: ellipsis;
 }
 
 /* Item ativo SEM a borda (sublinhado) */
@@ -197,6 +199,7 @@ html, body {
 .chat-history-item.active::before {
     color: var(--accent-color);
     text-decoration: none;
+    text-overflow: ellipsis;
 }
 
 
