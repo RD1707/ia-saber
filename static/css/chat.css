@@ -164,11 +164,10 @@ html, body {
     cursor: pointer;
     transition: var(--transition);
     border: 2px solid transparent; /* Para evitar pulos no layout no hover/active */
-    
-    /* Propriedades para o "..." em textos longos */
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    text-decoration: none;
 }
 
 .chat-history-item::before {
