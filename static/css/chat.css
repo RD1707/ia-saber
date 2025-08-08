@@ -177,6 +177,7 @@ html, body {
     font-size: 14px;
     color: var(--text-tertiary);
     transition: var(--transition);
+    text-decoration: none;
 }
 
 .chat-history-item:hover {
@@ -189,11 +190,12 @@ html, body {
     background: var(--accent-light);
     color: var(--accent-color);
     font-weight: 600;
-    /* A linha 'border-color' foi removida para tirar o "sublinhado" */
+    text-decoration: none;
 }
 
 .chat-history-item.active::before {
     color: var(--accent-color);
+    text-decoration: none;
 }
 
 
