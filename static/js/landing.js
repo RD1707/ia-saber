@@ -1,6 +1,5 @@
-// static/js/landing.js
-
 document.addEventListener('DOMContentLoaded', () => {
+    // --- Neural Network Canvas Animation ---
     const canvas = document.getElementById('neural-network-canvas');
     if (!canvas) {
         console.error('Canvas element not found!');
@@ -89,5 +88,23 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addEventListener('resize', () => {
         resizeCanvas();
         init(); 
+    });
+
+    // --- Mobile Navigation Menu ---
+    const navMenu = document.getElementById('nav-menu');
+    const navToggle = document.getElementById('nav-toggle');
+    const navLinks = document.querySelectorAll('.nav-link');
+
+    if (navToggle) {
+        navToggle.addEventListener('click', () => {
+            navMenu.classList.toggle('active');
+        });
+    }
+    
+    // Close menu when a link is clicked
+    navLinks.forEach(link => {
+        link.addEventListener('click', () => {
+            navMenu.classList.remove('active');
+        });
     });
 });

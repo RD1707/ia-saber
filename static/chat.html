@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SABER - Chat IA</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
     <link rel="stylesheet" href="css/chat.css">
     <link rel="icon" href="assets/logo.png" type="image/png">
 </head>
@@ -69,7 +70,7 @@
             <div class="sidebar-actions">
                 <button class="new-chat-btn" id="newChatBtn"><i class="fas fa-plus"></i><span>Nova Conversa</span></button>
             </div>
-            <div class="sidebar-content">
+            <div class="sidebar-content" id="sidebarContent">
                 <div class="chat-history-section" id="todaySection"><h3 class="section-title">Hoje</h3><div class="chat-history-list" id="todayChats"></div></div>
                 <div class="chat-history-section" id="yesterdaySection"><h3 class="section-title">Ontem</h3><div class="chat-history-list" id="yesterdayChats"></div></div>
                 <div class="chat-history-section" id="weekSection"><h3 class="section-title">Últimos 7 dias</h3><div class="chat-history-list" id="weekChats"></div></div>
@@ -80,7 +81,10 @@
                     <div class="user-avatar"><span id="user-initial">U</span></div>
                     <div class="user-details"><span class="user-name">Usuário</span></div>
                 </div>
-                <button class="logout-btn" id="logoutBtn" title="Sair"><i class="fas fa-sign-out-alt"></i></button>
+                <div class="footer-actions">
+                    <button class="theme-toggle-btn" id="themeToggleBtn" title="Mudar Tema"><i class="fas fa-sun"></i></button>
+                    <button class="logout-btn" id="logoutBtn" title="Sair"><i class="fas fa-sign-out-alt"></i></button>
+                </div>
             </div>
         </aside>
         <div class="sidebar-overlay" id="sidebarOverlay"></div>
@@ -95,6 +99,9 @@
             <div class="thinking-indicator" id="thinking" style="display: none;">
                 <div class="dot-flashing"></div>
                 <span> SABER está digitando...</span>
+                <button id="stop-generation-btn" class="stop-generation-btn">
+                    <i class="fas fa-stop"></i> Parar
+                </button>
             </div>
             <div class="chat-input-area">
                 <form id="message-form" class="input-wrapper">
@@ -212,6 +219,8 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
     <script src="js/chat.js"></script>
 </body>
 </html>
