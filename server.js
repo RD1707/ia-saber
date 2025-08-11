@@ -29,7 +29,16 @@ const corsOptions = {
     methods: 'GET,POST,PUT,DELETE',
 };
 app.use(cors(corsOptions));
-app.use(helmet());
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+        "script-src": ["'self'", "https://cdnjs.cloudflare.com"],
+      },
+    },
+  })
+);
 app.use(express.json());
 
 const authLimiter = rateLimit({
