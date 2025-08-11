@@ -1,7 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🚀 SABER Chat App inicializando...');
 
-    // Elementos da UI
+
     const loginScreen = document.getElementById('loginScreen');
     const loginForm = document.getElementById('login-form');
     const registerForm = document.getElementById('register-form');
@@ -23,7 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const settingsTabs = document.querySelectorAll('.settings-tab');
     const settingsPanels = document.querySelectorAll('.settings-panel');
 
-    // Estado da Aplicação
+
     let currentConversationId = null;
     let currentUser = null;
     let chatHistory = {
@@ -54,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // Funções Principais de Interface
+
     const showChatInterface = (user) => {
         currentUser = user;
         if (loginScreen) loginScreen.style.display = 'none';
@@ -115,7 +115,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Inicialização
+
     async function initializeApp() {
         const token = localStorage.getItem('token');
         if (!token) {
@@ -142,7 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateAboutStats();
     }
 
-    // Configuração de Eventos
+
     function setupEventListeners() {
         loginTabs.forEach(tab => {
             tab.addEventListener('click', () => {
@@ -167,7 +167,7 @@ document.addEventListener('DOMContentLoaded', () => {
         setupSettingsModal();
     }
 
-    // Handlers de Autenticação
+
     async function handleLogin(e) {
         e.preventDefault();
         const email = document.getElementById('email').value;
@@ -222,7 +222,6 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log("Usuário deslogado.");
     }
 
-    // Handlers de Chat
     async function handleNewConversationClick() {
         await criarNovaConversa();
     }
@@ -247,7 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Comunicação com a API de Chat
+
     async function sendMessage(message) {
         if (!currentConversationId) {
             console.error("Tentativa de enviar mensagem sem uma conversa ativa.");
@@ -289,7 +288,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // **MELHORIA APLICADA: Renderização de Markdown**
+
     function addMessageToChat(role, text, isAi = false) {
         const messageWrapper = document.createElement('div');
         messageWrapper.classList.add('message', role);
@@ -314,7 +313,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const messageText = document.createElement('div');
         messageText.classList.add('message-text');
 
-        // CONVERSÃO DE MARKDOWN
+
         if (isAi) {
             messageText.innerHTML = marked.parse(text);
         } else {
@@ -328,7 +327,7 @@ document.addEventListener('DOMContentLoaded', () => {
         messageWrapper.appendChild(bubble);
         chatMessages.appendChild(messageWrapper);
 
-        // ATIVA O HIGHLIGHT.JS PARA OS BLOCOS DE CÓDIGO
+
         messageWrapper.querySelectorAll('pre code').forEach((block) => {
             hljs.highlightElement(block);
         });
@@ -336,7 +335,7 @@ document.addEventListener('DOMContentLoaded', () => {
         scrollToBottom(true);
     }
 
-    // Gestão de Conversas
+
     async function criarNovaConversa() {
         console.log('🆕 Criando nova conversa...');
         try {
@@ -390,7 +389,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
-    // **MELHORIA APLICADA: Exclusão individual**
+
     async function handleDeleteConversation(conversationId) {
         if (confirm('Tem certeza de que deseja excluir esta conversa?')) {
             const token = localStorage.getItem('token');
@@ -413,7 +412,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Gestão do Histórico
+ 
     async function carregarHistorico() {
         const token = localStorage.getItem('token');
         if (!token) return;
@@ -449,7 +448,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // **MELHORIA APLICADA: Adiciona botão de exclusão**
+
     function preencherSecao(containerId, conversas) {
         const container = document.getElementById(containerId);
         const section = document.getElementById(containerId.replace('Chats', 'Section'));
@@ -493,7 +492,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Funções de Configurações (Modal)
+
     function setupSettingsModal() {
         if (settingsCloseBtn) settingsCloseBtn.addEventListener('click', closeSettingsModal);
         if (settingsModalOverlay) settingsModalOverlay.addEventListener('click', (e) => {
@@ -553,7 +552,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById("clearHistory")?.addEventListener("click", clearAllHistory);
     }
 
-    // Gestão de Configurações do Usuário
+
     function loadUserSettings() {
         try {
             const savedSettings = localStorage.getItem("saber_settings");
@@ -670,7 +669,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Funções Utilitárias da UI
+
     function setupSidebar() {
         if (window.innerWidth > 1024) {
             sidebar.classList.add('active');
@@ -740,6 +739,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Iniciar a aplicação
+ 
     initializeApp();
 });

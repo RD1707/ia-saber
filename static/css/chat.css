@@ -192,7 +192,7 @@ html, body {
     overflow: hidden; 
 }
 
-/* Adicione estas regras no final do seu arquivo chat.css */
+
 
 .chat-history-item {
     position: relative;
@@ -204,14 +204,14 @@ html, body {
     overflow: hidden;
     text-overflow: ellipsis;
     flex-grow: 1;
-    padding-right: 1.5rem; /* Espaço para o botão de deletar */
+    padding-right: 1.5rem; 
 }
 
-/* Arquivo: static/css/chat.css (adicionar ao final) */
 
-/* === Estilos Adicionais para Markdown === */
 
-/* Títulos (h3, h4, etc.) */
+
+
+
 .message-text h3 {
     font-size: 1.2em;
     font-weight: 600;
@@ -228,12 +228,12 @@ html, body {
     margin-bottom: 0.5em;
 }
 
-/* Listas (Ordenadas e Não Ordenadas) */
+
 .message-text ul,
 .message-text ol {
     margin-top: 0.5rem;
     margin-bottom: 1rem;
-    padding-left: 1.5rem; /* Adiciona espaçamento para os marcadores */
+    padding-left: 1.5rem; 
 }
 
 .message-text li {
@@ -246,7 +246,7 @@ html, body {
     font-weight: 600;
 }
 
-/* Citações (Blockquotes) */
+
 .message-text blockquote {
     margin: 1em 0;
     padding: 0.5em 1.25em;
@@ -260,14 +260,14 @@ html, body {
     margin-bottom: 0;
 }
 
-/* Linha Horizontal */
+
 .message-text hr {
     border: 0;
     border-top: 1px solid var(--border-color);
     margin: 1.5em 0;
 }
 
-/* Tabelas */
+
 .message-text table {
     width: 100%;
     margin: 1.5em 0;
@@ -311,12 +311,12 @@ html, body {
     font-size: 0.9rem;
     padding: 5px;
     border-radius: var(--radius-sm);
-    display: none; /* Escondido por padrão */
+    display: none; 
     transition: var(--transition);
 }
 
 .chat-history-item:hover .delete-chat-btn {
-    display: inline-block; /* Aparece no hover */
+    display: inline-block; 
 }
 
 .delete-chat-btn:hover {
