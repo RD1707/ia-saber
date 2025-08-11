@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🚀 SABER Chat App inicializando...');
 
+    // Elementos da UI
     const loginScreen = document.getElementById('loginScreen');
     const loginForm = document.getElementById('login-form');
     const registerForm = document.getElementById('register-form');
@@ -22,6 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const settingsTabs = document.querySelectorAll('.settings-tab');
     const settingsPanels = document.querySelectorAll('.settings-panel');
 
+    // Estado da Aplicação
     let currentConversationId = null;
     let currentUser = null;
     let chatHistory = {
@@ -52,6 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    // Funções Principais de Interface
     const showChatInterface = (user) => {
         currentUser = user;
         if (loginScreen) loginScreen.style.display = 'none';
@@ -96,7 +99,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-
     function limparInterface() {
         if (chatMessages) chatMessages.innerHTML = '';
         hideThinking();
@@ -113,33 +115,26 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Inicialização
     async function initializeApp() {
         const token = localStorage.getItem('token');
-
         if (!token) {
             showLoginInterface();
             setupEventListeners();
             return;
         }
-
         try {
             const res = await fetch('/api/verify-token', {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+                headers: { 'Authorization': `Bearer ${token}` }
             });
-
             if (!res.ok) throw new Error('Token inválido ou expirado');
-
             const userData = await res.json();
             showChatInterface(userData);
-
         } catch (err) {
             console.error('Falha na verificação do token:', err);
             localStorage.removeItem('token');
             showLoginInterface();
         }
-
         setupEventListeners();
         setupSidebar();
         loadUserSettings();
@@ -147,6 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
         updateAboutStats();
     }
 
+    // Configuração de Eventos
     function setupEventListeners() {
         loginTabs.forEach(tab => {
             tab.addEventListener('click', () => {
@@ -156,7 +152,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 document.getElementById(`${tab.dataset.tab}-form`)?.classList.add('active');
             });
         });
-
         if (loginForm) loginForm.addEventListener('submit', handleLogin);
         if (registerForm) registerForm.addEventListener('submit', handleRegister);
         if (logoutBtn) logoutBtn.addEventListener('click', handleLogout);
@@ -172,26 +167,19 @@ document.addEventListener('DOMContentLoaded', () => {
         setupSettingsModal();
     }
 
-
+    // Handlers de Autenticação
     async function handleLogin(e) {
         e.preventDefault();
         const email = document.getElementById('email').value;
         const password = document.getElementById('password').value;
-
         try {
             const res = await fetch('/api/login', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    email,
-                    password
-                })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
             });
             const data = await res.json();
             if (!res.ok) throw new Error(data.error || 'Erro ao fazer login');
-
             localStorage.setItem('token', data.token);
             showChatInterface(data.user);
         } catch (error) {
@@ -201,40 +189,31 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function handleRegister(e) {
-    e.preventDefault();
-    const name = document.getElementById('reg-name').value;
-    const email = document.getElementById('reg-email').value;
-    const password = document.getElementById('reg-password').value;
-    const confirm = document.getElementById('reg-confirm').value;
-
-    if (password !== confirm) {
-        return alert('As senhas não coincidem');
-    }
-
-    try {
-        const res = await fetch('/api/register', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, email, password })
-        });
-
-        const data = await res.json();
-
-        if (!res.ok) {
-            if (data.errors && data.errors.length > 0) {
-                throw new Error(data.errors[0].msg);
+        e.preventDefault();
+        const name = document.getElementById('reg-name').value;
+        const email = document.getElementById('reg-email').value;
+        const password = document.getElementById('reg-password').value;
+        const confirm = document.getElementById('reg-confirm').value;
+        if (password !== confirm) return alert('As senhas não coincidem');
+        try {
+            const res = await fetch('/api/register', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, email, password })
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                if (data.errors && data.errors.length > 0) throw new Error(data.errors[0].msg);
+                throw new Error(data.error || 'Ocorreu um erro desconhecido ao registrar.');
             }
-            throw new Error(data.error || 'Ocorreu um erro desconhecido ao registrar.');
+            alert('Conta criada com sucesso! Faça login.');
+            document.querySelector('[data-tab="login"]')?.click();
+        } catch (error) {
+            console.error("Erro no registro:", error);
+            alert(error.message);
         }
-
-        alert('Conta criada com sucesso! Faça login.');
-        document.querySelector('[data-tab="login"]')?.click();
-
-    } catch (error) {
-        console.error("Erro no registro:", error);
-        alert(error.message); 
     }
-}
+
     function handleLogout() {
         localStorage.removeItem('token');
         currentUser = null;
@@ -243,6 +222,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log("Usuário deslogado.");
     }
 
+    // Handlers de Chat
     async function handleNewConversationClick() {
         await criarNovaConversa();
     }
@@ -253,9 +233,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (message) {
             if (!currentConversationId) {
                 const newConvId = await criarNovaConversa();
-                if (newConvId) {
-                    await sendMessage(message);
-                }
+                if (newConvId) await sendMessage(message);
             } else {
                 await sendMessage(message);
             }
@@ -269,20 +247,18 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Comunicação com a API de Chat
     async function sendMessage(message) {
         if (!currentConversationId) {
             console.error("Tentativa de enviar mensagem sem uma conversa ativa.");
             return;
         }
-
         const placeholder = chatMessages.querySelector('.welcome-placeholder');
         if (placeholder) placeholder.remove();
-
         addMessageToChat('user', message);
         messageInput.value = '';
         autoResizeTextarea.call(messageInput);
         showThinking();
-
         try {
             const token = localStorage.getItem('token');
             const response = await fetch('/api/chat', {
@@ -297,28 +273,23 @@ document.addEventListener('DOMContentLoaded', () => {
                     settings: userSettings.ai
                 })
             });
-
             if (!response.ok) {
                 const errorData = await response.json();
                 throw new Error(errorData.error || `Erro ${response.status}`);
             }
-
             const data = await response.json();
             hideThinking();
             addMessageToChat('ai', data.response, true);
             if (userSettings.interface.soundNotifications) playNotificationSound();
-
-            if (data.isFirstMessage) {
-                await carregarHistorico();
-            }
-
+            if (data.isFirstMessage) await carregarHistorico();
         } catch (error) {
             console.error('Erro ao enviar mensagem:', error);
             hideThinking();
             addMessageToChat('ai', `Desculpe, ocorreu um erro: ${error.message}`);
         }
     }
-
+    
+    // **MELHORIA APLICADA: Renderização de Markdown**
     function addMessageToChat(role, text, isAi = false) {
         const messageWrapper = document.createElement('div');
         messageWrapper.classList.add('message', role);
@@ -343,47 +314,45 @@ document.addEventListener('DOMContentLoaded', () => {
         const messageText = document.createElement('div');
         messageText.classList.add('message-text');
 
-        let htmlContent = escapeHtml(text)
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-            .replace(/\*(.*?)\*/g, '<em>$1</em>');
-        
-        messageText.innerHTML = htmlContent;
+        // CONVERSÃO DE MARKDOWN
+        if (isAi) {
+            messageText.innerHTML = marked.parse(text);
+        } else {
+            const div = document.createElement('div');
+            div.textContent = text;
+            messageText.innerHTML = div.innerHTML;
+        }
 
         bubble.appendChild(messageText);
         messageWrapper.appendChild(avatar);
         messageWrapper.appendChild(bubble);
         chatMessages.appendChild(messageWrapper);
+
+        // ATIVA O HIGHLIGHT.JS PARA OS BLOCOS DE CÓDIGO
+        messageWrapper.querySelectorAll('pre code').forEach((block) => {
+            hljs.highlightElement(block);
+        });
+
         scrollToBottom(true);
     }
 
-
+    // Gestão de Conversas
     async function criarNovaConversa() {
         console.log('🆕 Criando nova conversa...');
         try {
             const token = localStorage.getItem('token');
             const response = await fetch('/api/new-conversation', {
                 method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+                headers: { 'Authorization': `Bearer ${token}` }
             });
-
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || 'Falha ao criar conversa');
-            }
-
+            if (!response.ok) throw new Error((await response.json()).error || 'Falha ao criar conversa');
             const conversation = await response.json();
             currentConversationId = conversation.id;
-
             limparInterface();
             await carregarHistorico();
-
             messageInput.focus();
             if (window.innerWidth <= 1024) closeSidebar();
-
             return conversation.id;
-
         } catch (error) {
             console.error('Erro ao criar nova conversa:', error);
             alert(error.message);
@@ -393,18 +362,66 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    async function carregarConversa(id) {
+        limparInterface();
+        currentConversationId = id;
+        document.querySelectorAll('.chat-history-item.active').forEach(i => i.classList.remove('active'));
+        const activeItem = document.querySelector(`.chat-history-item[data-id="${id}"]`);
+        if (activeItem) activeItem.classList.add('active');
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`/api/conversation/${id}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (!response.ok) throw new Error('Não foi possível carregar a conversa.');
+            const data = await response.json();
+            if (data.messages && data.messages.length > 0) {
+                chatMessages.innerHTML = ''; // Limpa o placeholder de boas-vindas
+                data.messages.forEach(msg => addMessageToChat(msg.role, msg.content, msg.role === 'assistant'));
+            } else {
+                adicionarMensagemDeBoasVindas();
+            }
+            if (window.innerWidth <= 1024) closeSidebar();
+        } catch (err) {
+            console.error("Erro ao carregar conversa:", err);
+            alert(err.message);
+            currentConversationId = null;
+            limparInterface();
+        }
+    }
+    
+    // **MELHORIA APLICADA: Exclusão individual**
+    async function handleDeleteConversation(conversationId) {
+        if (confirm('Tem certeza de que deseja excluir esta conversa?')) {
+            const token = localStorage.getItem('token');
+            try {
+                const response = await fetch(`/api/conversation/${conversationId}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!response.ok) throw new Error((await response.json()).error || 'Falha ao excluir a conversa.');
+                if (currentConversationId === conversationId) {
+                    currentConversationId = null;
+                    limparInterface();
+                }
+                console.log(`Conversa ${conversationId} excluída com sucesso.`);
+                await carregarHistorico();
+            } catch (error) {
+                console.error('Erro ao excluir a conversa:', error);
+                alert(error.message);
+            }
+        }
+    }
+
+    // Gestão do Histórico
     async function carregarHistorico() {
         const token = localStorage.getItem('token');
         if (!token) return;
-
         try {
             const response = await fetch('/api/history', {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+                headers: { 'Authorization': `Bearer ${token}` }
             });
             if (!response.ok) throw new Error('Falha ao carregar histórico');
-
             chatHistory = await response.json();
             renderizarHistorico();
             updateAboutStats();
@@ -419,7 +436,6 @@ document.addEventListener('DOMContentLoaded', () => {
         preencherSecao('yesterdayChats', chatHistory.yesterday);
         preencherSecao('weekChats', chatHistory.week);
         preencherSecao('olderChats', chatHistory.older);
-
         const activeItem = document.querySelector(`.chat-history-item[data-id="${currentConversationId}"]`);
         if (activeItem) activeItem.classList.add('active');
     }
@@ -428,96 +444,68 @@ document.addEventListener('DOMContentLoaded', () => {
         ['todayChats', 'yesterdayChats', 'weekChats', 'olderChats'].forEach(id => {
             const container = document.getElementById(id);
             if (container) container.innerHTML = '';
-            document.getElementById(id.replace('Chats', 'Section')).style.display = 'none';
+            const section = document.getElementById(id.replace('Chats', 'Section'));
+            if (section) section.style.display = 'none';
         });
     }
-    
+
+    // **MELHORIA APLICADA: Adiciona botão de exclusão**
     function preencherSecao(containerId, conversas) {
         const container = document.getElementById(containerId);
         const section = document.getElementById(containerId.replace('Chats', 'Section'));
         if (!container || !section || !conversas || conversas.length === 0) {
-            if(section) section.style.display = 'none';
+            if (section) section.style.display = 'none';
             return;
         }
-
         section.style.display = 'block';
-        container.innerHTML = ''; 
+        container.innerHTML = '';
         conversas.forEach(conv => {
             const item = document.createElement('a');
             item.href = '#';
             item.className = 'chat-history-item';
             item.dataset.id = conv.id;
-            item.textContent = conv.title || 'Conversa sem título';
-            item.title = conv.title;
-            if (conv.id === currentConversationId) {
-                item.classList.add('active');
-            }
-            item.addEventListener('click', async (e) => {
+            if (conv.id === currentConversationId) item.classList.add('active');
+
+            const titleText = document.createElement('span');
+            titleText.className = 'chat-title-text';
+            titleText.textContent = conv.title || 'Conversa sem título';
+            titleText.title = conv.title || 'Conversa sem título';
+            item.appendChild(titleText);
+
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'delete-chat-btn';
+            deleteBtn.title = 'Excluir conversa';
+            deleteBtn.innerHTML = '<i class="fas fa-trash-alt"></i>';
+            deleteBtn.dataset.id = conv.id;
+
+            deleteBtn.addEventListener('click', (e) => {
                 e.preventDefault();
-                await carregarConversa(conv.id);
+                e.stopPropagation();
+                handleDeleteConversation(conv.id);
+            });
+            item.appendChild(deleteBtn);
+
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                carregarConversa(conv.id);
             });
             container.appendChild(item);
         });
     }
 
-    async function carregarConversa(id) {
-        limparInterface(); 
-        currentConversationId = id; 
-        
-        document.querySelectorAll('.chat-history-item.active').forEach(i => i.classList.remove('active'));
-        const activeItem = document.querySelector(`.chat-history-item[data-id="${id}"]`);
-        if(activeItem) activeItem.classList.add('active');
-
-        try {
-            const token = localStorage.getItem('token');
-            const response = await fetch(`/api/conversation/${id}`, {
-                 headers: { 'Authorization': `Bearer ${token}` }
-            });
-            if (!response.ok) throw new Error('Não foi possível carregar a conversa.');
-
-            const data = await response.json();
-            if(data.messages && data.messages.length > 0) {
-                data.messages.forEach(msg => {
-                    addMessageToChat(msg.role, msg.content, msg.role === 'assistant');
-                });
-            } else {
-                 adicionarMensagemDeBoasVindas(); 
-            }
-            
-            if (window.innerWidth <= 1024) closeSidebar();
-
-        } catch(err) {
-            console.error("Erro ao carregar conversa:", err);
-            alert(err.message);
-            currentConversationId = null;
-            limparInterface();
-        }
-    }
-
+    // Funções de Configurações (Modal)
     function setupSettingsModal() {
-        if (settingsCloseBtn) {
-            settingsCloseBtn.addEventListener('click', closeSettingsModal);
-        }
-        if (settingsModalOverlay) {
-            settingsModalOverlay.addEventListener('click', (e) => {
-                if (e.target === settingsModalOverlay) {
-                    closeSettingsModal();
-                }
-            });
-        }
-        if (settingsTabs) {
-            settingsTabs.forEach(tab => {
-                tab.addEventListener('click', () => switchSettingsTab(tab.dataset.tab));
-            });
-        }
-        setupSettingsControls();
-        const saveSettingsBtn = document.getElementById('saveSettings');
-        if (saveSettingsBtn) saveSettingsBtn.addEventListener('click', () => {
-             saveUserSettings();
-             closeSettingsModal();
+        if (settingsCloseBtn) settingsCloseBtn.addEventListener('click', closeSettingsModal);
+        if (settingsModalOverlay) settingsModalOverlay.addEventListener('click', (e) => {
+            if (e.target === settingsModalOverlay) closeSettingsModal();
         });
-        const resetSettingsBtn = document.getElementById('resetSettings');
-        if (resetSettingsBtn) resetSettingsBtn.addEventListener('click', resetUserSettings);
+        if (settingsTabs) settingsTabs.forEach(tab => tab.addEventListener('click', () => switchSettingsTab(tab.dataset.tab)));
+        setupSettingsControls();
+        document.getElementById('saveSettings')?.addEventListener('click', () => {
+            saveUserSettings();
+            closeSettingsModal();
+        });
+        document.getElementById('resetSettings')?.addEventListener('click', resetUserSettings);
         setupSpecialControls();
     }
 
@@ -551,10 +539,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 temperatureValueDisplay.textContent = value.toFixed(1);
             });
         }
-        temperatureSlider?.addEventListener("change", e => {
-            userSettings.ai.temperature = parseFloat(e.target.value);
-        });
-
+        temperatureSlider?.addEventListener("change", e => userSettings.ai.temperature = parseFloat(e.target.value));
         document.getElementById("maxTokens")?.addEventListener("change", e => userSettings.ai.maxTokens = parseInt(e.target.value));
         document.getElementById("aiPersonality")?.addEventListener("change", e => userSettings.ai.personality = e.target.value);
         document.getElementById("theme")?.addEventListener("change", e => { userSettings.interface.theme = e.target.value; applyTheme(); });
@@ -568,6 +553,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById("clearHistory")?.addEventListener("click", clearAllHistory);
     }
 
+    // Gestão de Configurações do Usuário
     function loadUserSettings() {
         try {
             const savedSettings = localStorage.getItem("saber_settings");
@@ -586,6 +572,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             localStorage.setItem("saber_settings", JSON.stringify(userSettings));
             applySettings();
+            alert("Configurações salvas.");
         } catch (e) {
             console.error("Erro ao salvar configurações:", e);
             alert("Erro ao salvar configurações.");
@@ -594,13 +581,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function resetUserSettings() {
         if (confirm("Tem certeza que deseja restaurar as configurações padrão?")) {
+            localStorage.removeItem("saber_settings");
             userSettings = {
                 ai: { temperature: 0.5, maxTokens: 300, personality: "balanced", contextMemory: 10 },
                 interface: { theme: "light", compactMode: false, soundNotifications: false },
                 chat: { enterToSend: true }
             };
             updateSettingsUI();
-            saveUserSettings();
+            applySettings();
             alert("Configurações restauradas para o padrão.");
         }
     }
@@ -608,10 +596,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateSettingsUI() {
         const tempSlider = document.getElementById("temperature");
         if (tempSlider) tempSlider.value = userSettings.ai.temperature;
-        
         const tempValueDisplay = document.querySelector('[for="temperature"]')?.parentElement?.querySelector(".setting-value");
         if (tempValueDisplay) tempValueDisplay.textContent = userSettings.ai.temperature.toFixed(1);
-
         document.getElementById("maxTokens").value = userSettings.ai.maxTokens;
         document.getElementById("aiPersonality").value = userSettings.ai.personality;
         document.getElementById("theme").value = userSettings.interface.theme;
@@ -645,14 +631,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             if (!response.ok) throw new Error('Falha ao exportar conversas.');
-
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.style.display = 'none';
             a.href = url;
             const filename = response.headers.get('content-disposition')?.split('filename=')[1] || 'saber_export.json';
-            a.download = filename.replace(/"/g, ''); 
+            a.download = filename.replace(/"/g, '');
             document.body.appendChild(a);
             a.click();
             window.URL.revokeObjectURL(url);
@@ -664,22 +649,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    async function clearAllHistory() { 
-        if(confirm('Tem certeza que deseja apagar TODO o seu histórico de conversas? Esta ação não pode ser desfeita.')) {
-             const token = localStorage.getItem('token');
+    async function clearAllHistory() {
+        if (confirm('Tem certeza que deseja apagar TODO o seu histórico de conversas? Esta ação não pode ser desfeita.')) {
+            const token = localStorage.getItem('token');
             try {
                 const response = await fetch('/api/clear-all', {
                     method: 'DELETE',
                     headers: { 'Authorization': `Bearer ${token}` }
                 });
                 if (!response.ok) throw new Error('Falha ao limpar o histórico.');
-
-                await carregarHistorico(); 
+                await carregarHistorico();
                 currentConversationId = null;
-                limparInterface(); 
+                limparInterface();
                 alert('Seu histórico foi apagado com sucesso.');
                 closeSettingsModal();
-
             } catch (error) {
                 console.error('Erro ao limpar histórico:', error);
                 alert('Não foi possível apagar seu histórico.');
@@ -687,13 +670,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Funções Utilitárias da UI
     function setupSidebar() {
         if (window.innerWidth > 1024) {
             sidebar.classList.add('active');
         } else {
             sidebar.classList.remove('active');
         }
-
         window.addEventListener('resize', () => {
             if (window.innerWidth > 1024) {
                 sidebar.classList.add('active');
@@ -734,18 +717,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function playNotificationSound() {
         try {
-            const audio = new Audio('data:audio/wav;base64,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');
+            const audio = new Audio('data:audio/wav;base64,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');
             audio.volume = 0.3;
             audio.play().catch(e => console.warn('Som de notificação não pôde ser reproduzido:', e));
         } catch (error) {
             console.warn('Erro ao reproduzir som:', error);
         }
-    }
-
-    function escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
     }
 
     function isScrolledToBottom() {
@@ -763,5 +740,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Iniciar a aplicação
     initializeApp();
 });

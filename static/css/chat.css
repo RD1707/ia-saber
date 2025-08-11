@@ -192,6 +192,48 @@ html, body {
     overflow: hidden; 
 }
 
+/* Adicione estas regras no final do seu arquivo chat.css */
+
+.chat-history-item {
+    position: relative;
+    justify-content: space-between;
+}
+
+.chat-history-item .chat-title-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex-grow: 1;
+    padding-right: 1.5rem; /* Espaço para o botão de deletar */
+}
+
+
+.delete-chat-btn {
+    position: absolute;
+    right: 0.75rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 5px;
+    border-radius: var(--radius-sm);
+    display: none; /* Escondido por padrão */
+    transition: var(--transition);
+}
+
+.chat-history-item:hover .delete-chat-btn {
+    display: inline-block; /* Aparece no hover */
+}
+
+.delete-chat-btn:hover {
+    color: var(--danger-color);
+    background-color: var(--bg-tertiary);
+}
+
+
 .chat-header {
     display: flex;
     align-items: center;
