@@ -207,6 +207,97 @@ html, body {
     padding-right: 1.5rem; /* Espaço para o botão de deletar */
 }
 
+/* Arquivo: static/css/chat.css (adicionar ao final) */
+
+/* === Estilos Adicionais para Markdown === */
+
+/* Títulos (h3, h4, etc.) */
+.message-text h3 {
+    font-size: 1.2em;
+    font-weight: 600;
+    margin-top: 1.5em;
+    margin-bottom: 0.75em;
+    padding-bottom: 0.3em;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.message-text h4 {
+    font-size: 1.1em;
+    font-weight: 600;
+    margin-top: 1.25em;
+    margin-bottom: 0.5em;
+}
+
+/* Listas (Ordenadas e Não Ordenadas) */
+.message-text ul,
+.message-text ol {
+    margin-top: 0.5rem;
+    margin-bottom: 1rem;
+    padding-left: 1.5rem; /* Adiciona espaçamento para os marcadores */
+}
+
+.message-text li {
+    margin-bottom: 0.4rem;
+    line-height: 1.6;
+}
+
+.message-text li::marker {
+    color: var(--text-tertiary);
+    font-weight: 600;
+}
+
+/* Citações (Blockquotes) */
+.message-text blockquote {
+    margin: 1em 0;
+    padding: 0.5em 1.25em;
+    border-left: 4px solid var(--accent-light);
+    background-color: var(--bg-secondary);
+    color: var(--text-secondary);
+    border-radius: 0 var(--radius-md) var(--radius-md) 0;
+}
+
+.message-text blockquote p:last-child {
+    margin-bottom: 0;
+}
+
+/* Linha Horizontal */
+.message-text hr {
+    border: 0;
+    border-top: 1px solid var(--border-color);
+    margin: 1.5em 0;
+}
+
+/* Tabelas */
+.message-text table {
+    width: 100%;
+    margin: 1.5em 0;
+    border-collapse: collapse;
+    border: 1px solid var(--border-color);
+}
+
+.message-text th,
+.message-text td {
+    border: 1px solid var(--border-color);
+    padding: 0.6rem 0.8rem;
+    text-align: left;
+}
+
+.message-text th {
+    background-color: var(--bg-secondary);
+    font-weight: 600;
+}
+
+.message-text tr:nth-child(even) {
+    background-color: var(--bg-secondary);
+}
+
+.message.user .message-text th {
+    background-color: hsla(0,0%,0%,0.1);
+}
+.message.user .message-text tr:nth-child(even) {
+    background-color: hsla(0,0%,0%,0.05);
+}
+
 
 .delete-chat-btn {
     position: absolute;
