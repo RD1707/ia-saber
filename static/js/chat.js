@@ -1,9 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     console.log('🚀 SABER Chat App inicializando...');
 
-    //================================================
-    // 1. Seletores de Elementos do DOM
-    //================================================
     const loginScreen = document.getElementById('loginScreen');
     const loginForm = document.getElementById('login-form');
     const registerForm = document.getElementById('register-form');
@@ -25,9 +22,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const settingsTabs = document.querySelectorAll('.settings-tab');
     const settingsPanels = document.querySelectorAll('.settings-panel');
 
-    //================================================
-    // 2. Estado da Aplicação
-    //================================================
     let currentConversationId = null;
     let currentUser = null;
     let chatHistory = {
@@ -57,10 +51,6 @@ document.addEventListener('DOMContentLoaded', () => {
             showTimestamps: false
         }
     };
-
-    //================================================
-    // 3. Funções de Interface Principal (UI)
-    //================================================
 
     const showChatInterface = (user) => {
         currentUser = user;
@@ -123,11 +113,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-
-    //================================================
-    // 4. Lógica de Autenticação e Inicialização
-    //================================================
-
     async function initializeApp() {
         const token = localStorage.getItem('token');
 
@@ -162,10 +147,6 @@ document.addEventListener('DOMContentLoaded', () => {
         updateAboutStats();
     }
 
-
-    //================================================
-    // 5. Gerenciamento de Eventos
-    //================================================
     function setupEventListeners() {
         loginTabs.forEach(tab => {
             tab.addEventListener('click', () => {
@@ -239,13 +220,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const data = await res.json();
 
-        // Lógica de erro melhorada
         if (!res.ok) {
-            // Se a resposta tiver um array 'errors' (da validação), pegue a primeira mensagem.
             if (data.errors && data.errors.length > 0) {
                 throw new Error(data.errors[0].msg);
             }
-            // Senão, use a chave 'error' ou uma mensagem padrão.
             throw new Error(data.error || 'Ocorreu um erro desconhecido ao registrar.');
         }
 
@@ -254,7 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     } catch (error) {
         console.error("Erro no registro:", error);
-        alert(error.message); // Agora vai mostrar a mensagem de erro específica do servidor
+        alert(error.message); 
     }
 }
     function handleLogout() {
@@ -290,10 +268,6 @@ document.addEventListener('DOMContentLoaded', () => {
             messageForm.requestSubmit();
         }
     }
-
-    //================================================
-    // 6. Lógica do Chat e API
-    //================================================
 
     async function sendMessage(message) {
         if (!currentConversationId) {
@@ -467,7 +441,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         section.style.display = 'block';
-        container.innerHTML = ''; // Limpa antes de adicionar
+        container.innerHTML = ''; 
         conversas.forEach(conv => {
             const item = document.createElement('a');
             item.href = '#';
@@ -487,11 +461,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function carregarConversa(id) {
-        // ALTERAÇÃO: Removido o showThinking() daqui
-        limparInterface(); // Limpa a tela antes de carregar
-        currentConversationId = id; // Define o ID antes de qualquer coisa
+        limparInterface(); 
+        currentConversationId = id; 
         
-        // Ativa o item na barra lateral
         document.querySelectorAll('.chat-history-item.active').forEach(i => i.classList.remove('active'));
         const activeItem = document.querySelector(`.chat-history-item[data-id="${id}"]`);
         if(activeItem) activeItem.classList.add('active');
@@ -509,7 +481,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     addMessageToChat(msg.role, msg.content, msg.role === 'assistant');
                 });
             } else {
-                 adicionarMensagemDeBoasVindas(); // Mostra placeholder se a conversa estiver vazia
+                 adicionarMensagemDeBoasVindas(); 
             }
             
             if (window.innerWidth <= 1024) closeSidebar();
@@ -517,16 +489,10 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch(err) {
             console.error("Erro ao carregar conversa:", err);
             alert(err.message);
-            // Em caso de erro, volta para a tela de boas-vindas
             currentConversationId = null;
             limparInterface();
         }
     }
-
-
-    //================================================
-    // 7. Gerenciamento do Modal de Configurações
-    //================================================
 
     function setupSettingsModal() {
         if (settingsCloseBtn) {
@@ -585,7 +551,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 temperatureValueDisplay.textContent = value.toFixed(1);
             });
         }
-        // Listener para salvar o valor ao soltar o slider
         temperatureSlider?.addEventListener("change", e => {
             userSettings.ai.temperature = parseFloat(e.target.value);
         });
@@ -672,7 +637,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const totalConversations = [].concat(chatHistory.today, chatHistory.yesterday, chatHistory.week, chatHistory.older).length;
     }
 
-    // ALTERAÇÃO: Implementação da funcionalidade de exportar
     async function exportConversations() {
         console.log('Exportando conversas...');
         const token = localStorage.getItem('token');
@@ -688,7 +652,7 @@ document.addEventListener('DOMContentLoaded', () => {
             a.style.display = 'none';
             a.href = url;
             const filename = response.headers.get('content-disposition')?.split('filename=')[1] || 'saber_export.json';
-            a.download = filename.replace(/"/g, ''); // Remove aspas do nome do arquivo
+            a.download = filename.replace(/"/g, ''); 
             document.body.appendChild(a);
             a.click();
             window.URL.revokeObjectURL(url);
@@ -699,8 +663,7 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Não foi possível exportar seu histórico.');
         }
     }
-    
-    // ALTERAÇÃO: Implementação da funcionalidade de limpar histórico
+
     async function clearAllHistory() { 
         if(confirm('Tem certeza que deseja apagar TODO o seu histórico de conversas? Esta ação não pode ser desfeita.')) {
              const token = localStorage.getItem('token');
@@ -711,9 +674,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 if (!response.ok) throw new Error('Falha ao limpar o histórico.');
 
-                await carregarHistorico(); // Recarrega o histórico (que estará vazio)
+                await carregarHistorico(); 
                 currentConversationId = null;
-                limparInterface(); // Limpa a tela de chat
+                limparInterface(); 
                 alert('Seu histórico foi apagado com sucesso.');
                 closeSettingsModal();
 
@@ -723,11 +686,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
     }
-
-
-    //================================================
-    // 9. Funções de Sidebar e Layout
-    //================================================
 
     function setupSidebar() {
         if (window.innerWidth > 1024) {
@@ -755,10 +713,6 @@ document.addEventListener('DOMContentLoaded', () => {
         sidebar.classList.remove('active');
         sidebarOverlay.classList.remove('active');
     }
-
-    //================================================
-    // 10. Funções Auxiliares e Utilitários
-    //================================================
 
     function autoResizeTextarea() {
         this.style.height = 'auto';

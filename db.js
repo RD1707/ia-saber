@@ -3,12 +3,10 @@ const { v4: uuidv4 } = require('uuid');
 const bcrypt = require('bcrypt');
 require('dotenv').config();
 
-// Validação para garantir que a DATABASE_URL foi definida no .env
 if (!process.env.DATABASE_URL) {
   throw new Error('Erro: A variável de ambiente DATABASE_URL não foi definida.');
 }
 
-// Configuração do Pool usando a string de conexão direta
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
@@ -17,7 +15,6 @@ const pool = new Pool({
 });
 async function initializeDatabase() {
   try {
-    // O restante do arquivo continua exatamente o mesmo...
     await pool.query(`
       CREATE TABLE IF NOT EXISTS users (
         id UUID PRIMARY KEY,
@@ -58,7 +55,6 @@ async function initializeDatabase() {
   }
 }
 
-// ... (todo o resto do seu código de db.js continua aqui, sem alterações)
 async function registerUser(name, email, password) {
   const id = uuidv4(); 
   const saltRounds = 10; 

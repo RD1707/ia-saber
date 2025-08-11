@@ -1,8 +1,3 @@
-// server.js - VERSÃO MELHORADA COM PROMPTS OTIMIZADOS
-
-// =================================================================
-// 1. IMPORTAÇÕES E CONFIGURAÇÃO INICIAL
-// =================================================================
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
@@ -11,14 +6,10 @@ const { CohereClient } = require('cohere-ai');
 const db = require('./db');
 require('dotenv').config();
 
-// Novas importações para segurança e validação
-const helmet = require('helmet'); // Adiciona headers de segurança
-const rateLimit = require('express-rate-limit'); // Previne ataques de força bruta
-const { body, validationResult } = require('express-validator'); // Valida e sanitiza as entradas
+const helmet = require('helmet'); 
+const rateLimit = require('express-rate-limit');
+const { body, validationResult } = require('express-validator'); 
 
-// =================================================================
-// 2. CONSTANTES E VARIÁVEIS DE AMBIENTE
-// =================================================================
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET;
 const COHERE_API_KEY = process.env.COHERE_API_KEY;
@@ -33,9 +24,6 @@ const cohere = new CohereClient({
     token: COHERE_API_KEY,
 });
 
-// =================================================================
-// 3. CONFIGURAÇÕES DE MIDDLEWARE
-// =================================================================
 const corsOptions = {
     origin: process.env.NODE_ENV === 'production' ? process.env.ALLOWED_ORIGIN : '*',
     methods: 'GET,POST,PUT,DELETE',
@@ -51,10 +39,6 @@ const authLimiter = rateLimit({
     legacyHeaders: false,
     message: { error: 'Muitas tentativas de login/registro. Tente novamente em 15 minutos.' }
 });
-
-// =================================================================
-// 4. LÓGICA DA IA E PROMPTS OTIMIZADOS
-// =================================================================
 
 const asyncHandler = (fn) => (req, res, next) =>
     Promise.resolve(fn(req, res, next)).catch(next);
@@ -77,7 +61,6 @@ function authenticateToken(req, res, next) {
     });
 }
 
-// --- MELHORIA DE PROMPT: PREÂMBULO E PERSONALIDADES ---
 const CORE_SYSTEM_PROMPT = `
 Você é o SABER (Sistema de Análise e Benefício Educacional em Relatórios), uma avançada Inteligência Artificial educacional.
 
@@ -114,7 +97,6 @@ const DEFAULT_AI_SETTINGS = {
     contextMemory: 10
 };
 
-// --- MELHORIA DE PROMPT: GERAÇÃO DE TÍTULO ---
 async function generateChatTitle(firstMessage, aiSettings = DEFAULT_AI_SETTINGS) {
     if (!firstMessage || typeof firstMessage !== 'string') {
         console.warn("generateChatTitle recebeu mensagem inválida.");
@@ -163,17 +145,11 @@ function filterContextHistory(messages, contextMemory) {
     return recentMessages;
 }
 
-// =================================================================
-// 5. DEFINIÇÃO DAS ROTAS DA API (Sem alterações na lógica)
-// =================================================================
-
-// Servir arquivos estáticos
 app.use(express.static(path.join(__dirname, 'static')));
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'static', 'index.html'));
 });
 
-// --- Rotas de Autenticação ---
 app.post('/api/register', authLimiter,
     body('name').not().isEmpty().withMessage('O nome é obrigatório.').trim().escape(),
     body('email').isEmail().withMessage('Forneça um e-mail válido.').normalizeEmail(),
@@ -212,7 +188,6 @@ app.get('/api/verify-token', authenticateToken, (req, res) => {
     res.json({ id: req.user.id, email: req.user.email, name: req.user.name || 'Usuário' });
 });
 
-// --- Rotas do Chat ---
 app.post('/api/chat', authenticateToken,
     body('message').not().isEmpty().withMessage('A mensagem não pode estar vazia.').trim(),
     body('conversationId').optional().isUUID().withMessage('ID de conversa inválido.'),
@@ -279,7 +254,6 @@ app.post('/api/chat', authenticateToken,
     })
 );
 
-// --- Rotas de Conversas (sem alterações) ---
 app.get('/api/history', authenticateToken, asyncHandler(async (req, res) => {
     const allConversations = await db.getChatHistory(req.user.id);
     const now = new Date();
@@ -342,7 +316,6 @@ app.put('/api/conversation/:id/title', authenticateToken,
     })
 );
 
-// --- Rotas de Dados e Estatísticas (sem alterações) ---
 app.get('/api/export', authenticateToken, asyncHandler(async (req, res) => {
     const userId = req.user.id;
     const allUserConversations = await db.getChatHistory(userId);
