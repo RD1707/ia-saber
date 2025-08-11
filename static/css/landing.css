@@ -1,8 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
-/* ===========================================
-   VARIÁVEIS E RESET GERAL
-   =========================================== */
 :root {
     --primary-hue: 220;
     --accent-color: hsl(var(--primary-hue), 85%, 55%);
@@ -40,9 +37,6 @@ ul {
     list-style: none;
 }
 
-/* ===========================================
-   COMPONENTES REUTILIZÁVEIS
-   =========================================== */
 .btn {
     padding: 0.75rem 1.5rem;
     border-radius: var(--radius-full);
@@ -86,9 +80,6 @@ ul {
     font-size: 16px;
 }
 
-/* ===========================================
-   HEADER E NAVEGAÇÃO
-   =========================================== */
 .main-header {
     position: fixed;
     top: 0;
@@ -137,11 +128,8 @@ ul {
     color: var(--accent-color);
 }
 
-/* ===========================================
-   SEÇÕES PRINCIPAIS
-   =========================================== */
 main {
-    padding-top: 80px; /* Altura do header */
+    padding-top: 80px; 
 }
 
 section {
@@ -200,7 +188,6 @@ section {
     100% { transform: translateY(0px); }
 }
 
-/* Features Section */
 .features-section {
     text-align: center;
     background: var(--bg-secondary);
@@ -271,7 +258,6 @@ section {
     margin-bottom: 2rem;
 }
 
-/* Footer */
 .main-footer {
     text-align: center;
     padding: 2rem;
@@ -281,16 +267,9 @@ section {
     border-top: 1px solid var(--border-light);
 }
 
-/* static/css/landing.css */
-
-/* ... (todo o seu CSS anterior) ... */
-
-/* ===========================================
-   ESTILOS DA ANIMAÇÃO DO HERO
-   =========================================== */
 .hero-visual {
     position: relative;
-    flex: 1; /* Aumenta o espaço para a animação */
+    flex: 1; 
     min-height: 400px;
     display: flex;
     justify-content: center;
@@ -303,10 +282,9 @@ section {
     left: 0;
     width: 100%;
     height: 100%;
-    z-index: -1; /* Coloca o canvas atrás de qualquer conteúdo futuro */
+    z-index: -1; 
 }
 
-/* Ajuste para telas menores */
 @media (max-width: 900px) {
     .hero-visual {
         min-height: 300px;
@@ -314,7 +292,6 @@ section {
     }
 }
 
-/* Responsividade */
 @media (max-width: 900px) {
     .hero-section {
         flex-direction: column;
@@ -328,6 +305,6 @@ section {
     }
 
     .nav-menu, .nav-cta {
-        display: none; /* Simplificando para mobile, mas pode-se adicionar um menu hambúrguer */
+        display: none; 
     }
 }
