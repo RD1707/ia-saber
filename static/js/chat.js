@@ -83,7 +83,14 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function setupAllEventListeners() {
-        DOM.loginTabs.forEach(tab => tab.addEventListener('click', () => switchTab(tab.dataset.tab)));
+        DOM.loginTabs.forEach(tab => {
+            tab.addEventListener('click', (event) => {
+                const tabName = event.currentTarget.dataset.tab;
+                if (tabName) {
+                    switchTab(tabName);
+                }
+            });
+        });
         DOM.loginForm?.addEventListener('submit', handleLogin);
         DOM.registerForm?.addEventListener('submit', handleRegister);
         DOM.logoutBtn?.addEventListener('click', handleLogout);
@@ -223,9 +230,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function switchTab(tabName) {
         DOM.loginTabs.forEach(tab => tab.classList.remove('active'));
-        document.querySelector(`[data-tab="${tabName}"]`)?.classList.add('active');
+        const activeTab = document.querySelector(`[data-tab="${tabName}"]`);
+        if (activeTab) {
+            activeTab.classList.add('active');
+        }
+
         document.querySelectorAll('.login-form').forEach(form => form.classList.remove('active'));
-        document.getElementById(`${tabName}-form`)?.classList.add('active');
+        const activeForm = document.getElementById(`${tabName}-form`);
+        if (activeForm) {
+            activeForm.classList.add('active');
+        }
     }
 
     async function handleLogin(e) {
@@ -239,12 +253,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify({ email, password })
             });
             const data = await res.json();
-            if (!res.ok) throw new Error(data.error || 'Erro ao fazer login');
+            if (!res.ok) {
+                throw new Error(data.error || 'Erro desconhecido ao fazer login.');
+            }
             localStorage.setItem('token', data.token);
+            state.currentUser = data.user; // Salva os dados do usuário no estado
             showChatInterface(data.user);
         } catch (error) {
             console.error("Erro no login:", error);
-            alert(error.message);
+            alert(`Falha no login: ${error.message}`);
         }
     }
 
@@ -255,7 +272,10 @@ document.addEventListener('DOMContentLoaded', () => {
         const password = document.getElementById('reg-password').value;
         const confirm = document.getElementById('reg-confirm').value;
 
-        if (password !== confirm) return alert('As senhas não coincidem');
+        if (password !== confirm) {
+            alert('As senhas não coincidem!');
+            return;
+        }
 
         try {
             const res = await fetch('/api/register', {
@@ -265,16 +285,22 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             const data = await res.json();
             if (!res.ok) {
-                if (data.errors) throw new Error(data.errors[0].msg);
-                throw new Error(data.error || 'Erro ao registrar.');
+                // Se houver um array de erros da validação, mostre o primeiro.
+                if (data.errors) {
+                    throw new Error(data.errors[0].msg);
+                }
+                // Senão, mostre a mensagem de erro principal.
+                throw new Error(data.error || 'Erro desconhecido ao registrar.');
             }
-            alert('Conta criada com sucesso! Faça login.');
-            switchTab('login');
+            alert('Conta criada com sucesso! Por favor, faça o login.');
+            DOM.registerForm.reset(); // Limpa o formulário de registro
+            switchTab('login'); // Muda para a aba de login
         } catch (error) {
             console.error("Erro no registro:", error);
-            alert(error.message);
+            alert(`Falha no registro: ${error.message}`);
         }
     }
+
 
     function handleLogout() {
         localStorage.removeItem('token');
@@ -294,8 +320,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (message) {
             state.lastUserMessage = message;
             if (!state.currentConversationId) {
-                const newConvId = await criarNovaConversa();
-                if (newConvId) await sendMessage(message);
+                // Cria uma nova conversa primeiro, depois envia a mensagem
+                const newConv = await criarNovaConversa();
+                if (newConv) {
+                     await sendMessage(message);
+                }
             } else {
                 await sendMessage(message);
             }
@@ -322,8 +351,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const action = button.dataset.action;
         const messageBubble = button.closest('.message-bubble');
-        if (!messageBubble) return;
+        
+        // Ação de copiar código
+        if (action === 'copy-code') {
+            const pre = button.closest('pre');
+            if (pre) {
+                const codeBlock = pre.querySelector('code');
+                if(codeBlock) {
+                    navigator.clipboard.writeText(codeBlock.innerText).then(() => {
+                        button.innerHTML = '<i class="fas fa-check"></i> Copiado!';
+                        setTimeout(() => button.innerHTML = '<i class="fas fa-copy"></i> Copiar', 2000);
+                    });
+                }
+            }
+            return; 
+        }
 
+        if (!messageBubble) return;
         const messageText = messageBubble.querySelector('.message-text')?.innerText;
         
         switch (action) {
@@ -331,13 +375,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 navigator.clipboard.writeText(messageText).then(() => {
                     button.innerHTML = '<i class="fas fa-check"></i>';
                     setTimeout(() => button.innerHTML = '<i class="fas fa-copy"></i>', 2000);
-                });
-                break;
-            case 'copy-code':
-                const codeBlock = button.closest('pre').querySelector('code');
-                navigator.clipboard.writeText(codeBlock.innerText).then(() => {
-                    button.innerHTML = '<i class="fas fa-check"></i> Copiado!';
-                    setTimeout(() => button.innerHTML = '<i class="fas fa-copy"></i> Copiar', 2000);
                 });
                 break;
             case 'regenerate':
@@ -372,7 +409,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function sendMessage(message) {
-        if (!state.currentConversationId) return;
+        if (!state.currentConversationId) {
+            alert("Nenhuma conversa selecionada.");
+            return;
+        }
         DOM.chatMessages.querySelector('.welcome-placeholder')?.remove();
         addMessageToChat('user', message);
         DOM.messageInput.value = '';
@@ -388,11 +428,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 body: JSON.stringify({ message, conversationId: state.currentConversationId, settings: state.userSettings.ai }),
                 signal: state.abortController.signal
             });
-            if (!response.ok) throw new Error((await response.json()).error || 'Erro do servidor');
             const data = await response.json();
+            if (!response.ok) throw new Error(data.error || 'Erro do servidor');
+            
             addMessageToChat('ai', data.response, true);
             if (state.userSettings.interface.soundNotifications) playNotificationSound();
-            if (data.isFirstMessage) await carregarHistorico();
+            
+            // Se for a primeira mensagem, o título da conversa pode ter mudado. Atualize o histórico.
+            if (data.isFirstMessage) {
+                 await carregarHistorico();
+            }
+
         } catch (error) {
             if (error.name !== 'AbortError') {
                 addMessageToChat('ai', `Desculpe, ocorreu um erro: ${error.message}`);
@@ -414,17 +460,26 @@ document.addEventListener('DOMContentLoaded', () => {
             });
             if (!response.ok) throw new Error('Falha ao criar conversa');
             const conversation = await response.json();
+            
             state.currentConversationId = conversation.id;
             limparInterface();
-            await carregarHistorico();
+            await carregarHistorico(); // Recarrega o histórico com a nova conversa
+            
+            // Seleciona a nova conversa na barra lateral
+             const activeItem = document.querySelector(`.chat-history-item[data-id="${conversation.id}"]`);
+            if (activeItem) {
+                activeItem.classList.add('active');
+            }
+            
             DOM.messageInput.focus();
             if (window.innerWidth <= 1024) closeSidebar();
-            return conversation.id;
+            return conversation; // Retorna a conversa criada
         } catch (error) {
             alert(error.message);
             return null;
         }
     }
+
 
     async function carregarHistorico() {
         const token = localStorage.getItem('token');
@@ -440,8 +495,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function carregarConversa(id) {
+        if(state.currentConversationId === id) return; // Não recarrega se já estiver na conversa
+
         limparInterface();
         state.currentConversationId = id;
+        
         document.querySelectorAll('.chat-history-item.active').forEach(i => i.classList.remove('active'));
         const activeItem = document.querySelector(`.chat-history-item[data-id="${id}"]`);
         if (activeItem) {
@@ -457,6 +515,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await response.json();
 
             if (data.messages && data.messages.length > 0) {
+                 DOM.chatMessages.querySelector('.welcome-placeholder')?.remove();
                 data.messages.forEach(msg => addMessageToChat(msg.role, msg.content, msg.role === 'assistant'));
                 state.lastUserMessage = data.messages.filter(m => m.role === 'user').pop()?.content;
             } else {
@@ -475,11 +534,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const token = localStorage.getItem('token');
             const res = await fetch(`/api/conversation/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
             if (!res.ok) throw new Error('Falha ao excluir.');
+            
+            // Se a conversa excluída era a ativa
             if (id === state.currentConversationId) {
                 state.currentConversationId = null;
                 limparInterface();
             }
-            await carregarHistorico();
+            
+            await carregarHistorico(); // Atualiza a lista
         } catch (error) {
             alert(error.message);
         }
@@ -509,24 +571,38 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function showChatInterface(user) {
+        if (!user) {
+            console.error("Tentativa de mostrar interface de chat sem usuário.");
+            handleLogout();
+            return;
+        }
         state.currentUser = user;
         DOM.loginScreen.style.display = 'none';
         DOM.appContainer.style.display = 'flex';
         DOM.userNameEl.textContent = user.name || 'Usuário';
         if (DOM.userInitialEl && user.name) DOM.userInitialEl.textContent = user.name.charAt(0).toUpperCase();
-        carregarHistorico();
-        if (!state.currentConversationId) adicionarMensagemDeBoasVindas();
+        
+        carregarHistorico().then(() => {
+            // Se não houver conversa ativa, mostra a tela de boas-vindas
+            if (!state.currentConversationId) {
+                adicionarMensagemDeBoasVindas();
+            }
+        });
     }
     
     function showLoginInterface() {
         DOM.loginScreen.style.display = 'flex';
         DOM.appContainer.style.display = 'none';
+        state.currentUser = null;
+        localStorage.removeItem('token');
     }
 
     function addMessageToChat(role, text, isAi = false) {
+        DOM.chatMessages.querySelector('.welcome-placeholder')?.remove();
         const messageWrapper = document.createElement('div');
         messageWrapper.classList.add('message', role);
-        const avatar = `<div class="message-avatar"><div class="avatar-circle">${isAi ? '<img src="assets/logo.png" alt="SABER">' : (state.currentUser?.name?.charAt(0).toUpperCase() || 'U')}</div></div>`;
+        const userNameChar = state.currentUser?.name?.charAt(0).toUpperCase() || 'U';
+        const avatar = `<div class="message-avatar"><div class="avatar-circle">${isAi ? '<img src="assets/logo.png" alt="SABER">' : userNameChar}</div></div>`;
         const messageText = isAi ? marked.parse(text) : text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
         const actions = isAi ? `
             <div class="message-actions">
@@ -537,7 +613,13 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>` : '';
         messageWrapper.innerHTML = `${avatar}<div class="message-bubble"><div class="message-text">${messageText}</div>${actions}</div>`;
         DOM.chatMessages.appendChild(messageWrapper);
-        messageWrapper.querySelectorAll('pre code').forEach(block => hljs.highlightElement(block));
+        messageWrapper.querySelectorAll('pre code').forEach(block => {
+            try {
+                hljs.highlightElement(block)
+            } catch(e) {
+                console.error("Erro no highlight.js", e);
+            }
+        });
         messageWrapper.querySelectorAll('pre').forEach(pre => {
             if (pre.querySelector('code')) {
                 const copyBtn = document.createElement('button');
@@ -556,18 +638,21 @@ document.addEventListener('DOMContentLoaded', () => {
         preencherSecao('yesterdayChats', state.chatHistory.yesterday);
         preencherSecao('weekChats', state.chatHistory.week);
         preencherSecao('olderChats', state.chatHistory.older);
-        const activeItem = document.querySelector(`.chat-history-item[data-id="${state.currentConversationId}"]`);
-        if(activeItem) activeItem.classList.add('active');
+        // Re-aplica a classe 'active' à conversa atual, se existir
+        if (state.currentConversationId) {
+            const activeItem = document.querySelector(`.chat-history-item[data-id="${state.currentConversationId}"]`);
+            if(activeItem) activeItem.classList.add('active');
+        }
     }
 
     function limparHistoricoVisual() {
-        ['todaySection', 'yesterdaySection', 'weekSection', 'olderSection'].forEach(id => {
+        ['todayChats', 'yesterdayChats', 'weekChats', 'olderChats'].forEach(id => {
+            const container = document.getElementById(id);
+            if (container) container.innerHTML = '';
+        });
+         ['todaySection', 'yesterdaySection', 'weekSection', 'olderSection'].forEach(id => {
             const section = document.getElementById(id);
-            if(section) {
-                const list = section.querySelector('.chat-history-list');
-                list.innerHTML = '';
-                section.style.display = 'none';
-            }
+            if(section) section.style.display = 'none';
         });
     }
 
@@ -575,13 +660,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const container = document.getElementById(containerId);
         const section = document.getElementById(containerId.replace('Chats', 'Section'));
         if (!container || !section || !conversas || !conversas.length) return;
-        section.style.display = 'block';
+        
+        section.style.display = 'block'; // Mostra a seção
+        
         conversas.forEach(conv => {
             const item = document.createElement('div');
             item.className = 'chat-history-item';
             item.dataset.id = conv.id;
+            const title = conv.title || 'Nova Conversa';
             item.innerHTML = `
-                <span class="chat-title-text" title="${conv.title || ''}">${conv.title || 'Nova Conversa'}</span>
+                <span class="chat-title-text" title="${title}">${title}</span>
                 <div class="chat-history-actions">
                     <button class="history-action-btn" data-action="rename" title="Renomear"><i class="fas fa-pen"></i></button>
                     <button class="history-action-btn" data-action="delete" title="Excluir"><i class="fas fa-trash"></i></button>
@@ -597,8 +685,10 @@ document.addEventListener('DOMContentLoaded', () => {
         DOM.messageInput.style.height = 'auto';
         DOM.chatTitle.textContent = 'Sua Conversa';
         document.querySelectorAll('.chat-history-item.active').forEach(item => item.classList.remove('active'));
-        if (!state.currentConversationId) adicionarMensagemDeBoasVindas();
+        // Sempre adiciona a mensagem de boas-vindas ao limpar, a menos que uma conversa seja carregada
+        adicionarMensagemDeBoasVindas();
     }
+
 
     function adicionarMensagemDeBoasVindas() {
         DOM.chatMessages.innerHTML = `
@@ -611,8 +701,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 <button class="prompt-btn" data-prompt="Como funciona uma rede neural?">Como funciona uma rede neural?</button>
             </div>
         </div>`;
-        document.querySelectorAll('.prompt-btn').forEach(btn => btn.addEventListener('click', () => {
+        document.querySelectorAll('.prompt-btn').forEach(btn => btn.addEventListener('click', async () => {
             DOM.messageInput.value = btn.dataset.prompt;
+             // Garante que uma conversa exista antes de enviar
+            if (!state.currentConversationId) {
+                await criarNovaConversa();
+            }
             DOM.messageForm.requestSubmit();
         }));
     }
@@ -627,20 +721,25 @@ document.addEventListener('DOMContentLoaded', () => {
         DOM.thinkingIndicator.style.display = 'none';
         DOM.sendButton.disabled = false;
         DOM.messageInput.disabled = false;
+        DOM.messageInput.focus();
     }
     
     function setupSidebarResponsiveness() {
-        if (window.innerWidth > 1024) DOM.sidebar.classList.add('active');
-        else DOM.sidebar.classList.remove('active');
-        window.addEventListener('resize', () => {
-            if (window.innerWidth > 1024) {
+        const mq = window.matchMedia('(max-width: 1024px)');
+        
+        function handleScreenChange(e) {
+            if (e.matches) { // Se a tela for pequena
+                DOM.sidebar.classList.remove('active');
+            } else { // Se a tela for grande
                 DOM.sidebar.classList.add('active');
                 DOM.sidebarOverlay.classList.remove('active');
-            } else {
-                DOM.sidebar.classList.remove('active');
             }
-        });
+        }
+
+        mq.addEventListener('change', handleScreenChange);
+        handleScreenChange(mq); // Executa na inicialização
     }
+
 
     function toggleSidebar() {
         DOM.sidebar.classList.toggle('active');
@@ -648,8 +747,10 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function closeSidebar() {
-        DOM.sidebar.classList.remove('active');
-        DOM.sidebarOverlay.classList.remove('active');
+        if (window.innerWidth <= 1024) {
+            DOM.sidebar.classList.remove('active');
+            DOM.sidebarOverlay.classList.remove('active');
+        }
     }
 
     function toggleTheme() {
@@ -663,7 +764,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function applyTheme() {
         let themeToApply = state.userSettings.interface.theme;
         if (themeToApply === 'auto') {
-            themeToApply = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            themeToApply = prefersDark ? 'dark' : 'light';
         }
         document.body.dataset.theme = themeToApply;
         updateThemeIcon(themeToApply);
@@ -686,8 +788,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const a = document.createElement('a');
             a.style.display = 'none';
             a.href = url;
-            const filename = response.headers.get('content-disposition')?.split('filename=')[1] || 'saber_export.json';
-            a.download = filename.replace(/"/g, '');
+            const filenameHeader = response.headers.get('content-disposition');
+            let filename = 'saber_export.json';
+            if (filenameHeader) {
+                const parts = filenameHeader.split('filename=');
+                if (parts.length > 1) {
+                    filename = parts[1].replace(/"/g, '');
+                }
+            }
+            a.download = filename;
             document.body.appendChild(a);
             a.click();
             window.URL.revokeObjectURL(url);
@@ -716,7 +825,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     function playNotificationSound() {
         try {
-            const audio = new Audio('data:audio/wav;base64,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');
+            const audio = new Audio('data:audio/wav;base64,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');
             audio.volume = 0.3;
             audio.play().catch(e => console.warn('Som de notificação não pôde ser reproduzido:', e));
         } catch (error) {
@@ -727,11 +836,18 @@ document.addEventListener('DOMContentLoaded', () => {
     function autoResizeTextarea() {
         this.style.height = 'auto';
         const maxHeight = 150;
-        this.style.height = `${Math.min(this.scrollHeight, maxHeight)}px`;
+        // Calcula a altura do scroll e limita ao máximo
+        const newHeight = Math.min(this.scrollHeight, maxHeight);
+        this.style.height = `${newHeight}px`;
+
+        // Se a altura atingir o máximo, habilita o scroll vertical
+        this.style.overflowY = (newHeight >= maxHeight) ? 'auto' : 'hidden';
     }
+
 
     function isScrolledToBottom() {
         if (!DOM.chatMessages) return true;
+        // Uma margem de 50px para considerar "no fundo"
         return DOM.chatMessages.scrollHeight - DOM.chatMessages.clientHeight <= DOM.chatMessages.scrollTop + 50;
     }
 
@@ -741,5 +857,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    // Inicia a aplicação
     initializeApp();
 });
